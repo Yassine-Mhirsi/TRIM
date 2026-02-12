@@ -13,6 +13,8 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+const TRIM_EPSILON_SECONDS = 0.01;
+
 function formatMmSs(value: number): string {
   const totalSeconds = Math.max(0, Math.floor(value));
   const minutes = Math.floor(totalSeconds / 60);
@@ -23,12 +25,11 @@ function formatMmSs(value: number): string {
 export default function TrimControls(props: TrimControlsProps): ReactElement {
   const { duration, start, end, disabled, onChangeStart, onChangeEnd } = props;
   const max = Math.max(0.01, duration);
-  const safeStart = clamp(start, 0, Math.max(0, end - 0.01));
-  const safeEnd = clamp(end, Math.min(max, safeStart + 0.01), max);
+  const safeStart = clamp(start, 0, Math.max(0, end - TRIM_EPSILON_SECONDS));
+  const safeEnd = clamp(end, Math.min(max, safeStart + TRIM_EPSILON_SECONDS), max);
   const startPercent = (safeStart / max) * 100;
   const endPercent = (safeEnd / max) * 100;
   const selectedPercent = Math.max(0, endPercent - startPercent);
-  const selectedDuration = Math.max(0, safeEnd - safeStart);
 
   return (
     <section className="trim-controls">
@@ -49,27 +50,40 @@ export default function TrimControls(props: TrimControlsProps): ReactElement {
           className="range-input range-start"
           type="range"
           min={0}
-          max={Math.max(0, safeEnd - 0.01)}
+          max={max}
           step={0.01}
           value={safeStart}
           disabled={disabled}
-          onChange={(event) => onChangeStart(Number(event.target.value))}
+          onChange={(event) => {
+            const nextStart = clamp(
+              Number(event.target.value),
+              0,
+              Math.max(0, safeEnd - TRIM_EPSILON_SECONDS)
+            );
+            onChangeStart(nextStart);
+          }}
           aria-label="Trim start"
         />
         <input
           id="trim-end-range"
           className="range-input range-end"
           type="range"
-          min={Math.min(max, safeStart + 0.01)}
+          min={0}
           max={max}
           step={0.01}
           value={safeEnd}
           disabled={disabled}
-          onChange={(event) => onChangeEnd(Number(event.target.value))}
+          onChange={(event) => {
+            const nextEnd = clamp(
+              Number(event.target.value),
+              Math.min(max, safeStart + TRIM_EPSILON_SECONDS),
+              max
+            );
+            onChangeEnd(nextEnd);
+          }}
           aria-label="Trim end"
         />
       </div>
-      <p className="selected-duration">{formatMmSs(selectedDuration)} selected</p>
     </section>
   );
 }

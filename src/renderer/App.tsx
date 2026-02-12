@@ -8,6 +8,13 @@ type ProbeResult = {
   format: string;
 };
 
+type TrimRange = {
+  start: number;
+  end: number;
+};
+
+const TRIM_EPSILON_SECONDS = 0.01;
+
 function toFileUrl(localPath: string): string {
   const normalized = localPath.replace(/\\/g, "/");
   const encoded = encodeURI(normalized);
@@ -28,11 +35,23 @@ function formatMmSs(value: number): string {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizeTrimRange(range: TrimRange, duration: number): TrimRange {
+  const maxDuration = Math.max(0, duration);
+  const minWindow = Math.min(TRIM_EPSILON_SECONDS, maxDuration);
+  const maxStart = Math.max(0, maxDuration - minWindow);
+  const start = clamp(range.start, 0, maxStart);
+  const end = clamp(range.end, start + minWindow, maxDuration);
+  return { start, end };
+}
+
 export default function App(): ReactElement {
   const [inputPath, setInputPath] = useState<string | null>(null);
   const [probe, setProbe] = useState<ProbeResult | null>(null);
-  const [startSeconds, setStartSeconds] = useState(0);
-  const [endSeconds, setEndSeconds] = useState(0);
+  const [trimRange, setTrimRange] = useState<TrimRange>({ start: 0, end: 0 });
   const [outputPath, setOutputPath] = useState<string>("");
   const [isTrimming, setIsTrimming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,12 +63,12 @@ export default function App(): ReactElement {
     try {
       const metadata = await window.trimApi.probeVideo(nextPath);
       setProbe(metadata);
-      setStartSeconds(0);
-      setEndSeconds(metadata.durationSeconds);
+      setTrimRange(normalizeTrimRange({ start: 0, end: metadata.durationSeconds }, metadata.durationSeconds));
       const suggested = await window.trimApi.suggestOutputPath(nextPath);
       setOutputPath(suggested);
     } catch (loadError) {
       setProbe(null);
+      setTrimRange({ start: 0, end: 0 });
       setOutputPath("");
       setError(loadError instanceof Error ? loadError.message : "Failed to load the selected file.");
     }
@@ -70,6 +89,12 @@ export default function App(): ReactElement {
   }, [loadVideo]);
 
   const duration = probe?.durationSeconds ?? 0;
+  const normalizedTrimRange = useMemo(
+    () => normalizeTrimRange(trimRange, duration),
+    [trimRange, duration]
+  );
+  const startSeconds = normalizedTrimRange.start;
+  const endSeconds = normalizedTrimRange.end;
   const disableExport = !inputPath || !probe || isTrimming || endSeconds <= startSeconds;
   const exportDuration = useMemo(() => Math.max(0, endSeconds - startSeconds), [endSeconds, startSeconds]);
 
@@ -132,8 +157,28 @@ export default function App(): ReactElement {
           start={startSeconds}
           end={endSeconds}
           disabled={isTrimming}
-          onChangeStart={(value) => setStartSeconds(Math.max(0, Math.min(value, endSeconds - 0.01)))}
-          onChangeEnd={(value) => setEndSeconds(Math.min(duration, Math.max(value, startSeconds + 0.01)))}
+          onChangeStart={(value) =>
+            setTrimRange((current) =>
+              normalizeTrimRange(
+                {
+                  start: value,
+                  end: current.end
+                },
+                duration
+              )
+            )
+          }
+          onChangeEnd={(value) =>
+            setTrimRange((current) =>
+              normalizeTrimRange(
+                {
+                  start: current.start,
+                  end: value
+                },
+                duration
+              )
+            )
+          }
         />
       )}
 

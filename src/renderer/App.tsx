@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
-import TrimControls from "./components/TrimControls";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
+import VideoPlayer from "./components/VideoPlayer";
+import Timeline from "./components/Timeline";
+import PlaybackControls from "./components/PlaybackControls";
+import { useVideoPlayer } from "./hooks/useVideoPlayer";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { normalizeTrimRange, type TrimRange } from "./utils/math";
+import { formatTimestamp } from "./utils/time";
 
 type ProbeResult = {
   durationSeconds: number;
@@ -7,13 +13,6 @@ type ProbeResult = {
   height: number;
   format: string;
 };
-
-type TrimRange = {
-  start: number;
-  end: number;
-};
-
-const TRIM_EPSILON_SECONDS = 0.01;
 
 function toFileUrl(localPath: string): string {
   const normalized = localPath.replace(/\\/g, "/");
@@ -28,26 +27,6 @@ function makeJobId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function formatMmSs(value: number): string {
-  const totalSeconds = Math.max(0, Math.floor(value));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
-function normalizeTrimRange(range: TrimRange, duration: number): TrimRange {
-  const maxDuration = Math.max(0, duration);
-  const minWindow = Math.min(TRIM_EPSILON_SECONDS, maxDuration);
-  const maxStart = Math.max(0, maxDuration - minWindow);
-  const start = clamp(range.start, 0, maxStart);
-  const end = clamp(range.end, start + minWindow, maxDuration);
-  return { start, end };
-}
-
 export default function App(): ReactElement {
   const [inputPath, setInputPath] = useState<string | null>(null);
   const [probe, setProbe] = useState<ProbeResult | null>(null);
@@ -55,6 +34,8 @@ export default function App(): ReactElement {
   const [outputPath, setOutputPath] = useState<string>("");
   const [isTrimming, setIsTrimming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const loadVideo = useCallback(async (nextPath: string) => {
     setError(null);
@@ -95,6 +76,49 @@ export default function App(): ReactElement {
   );
   const startSeconds = normalizedTrimRange.start;
   const endSeconds = normalizedTrimRange.end;
+
+  // Video player hook — pass inputPath so effects re-run when the video element mounts
+  const videoSrc = inputPath ? toFileUrl(inputPath) : null;
+  const { currentTime, isPlaying, togglePlay, seek } = useVideoPlayer({
+    videoRef,
+    trimStart: startSeconds,
+    trimEnd: endSeconds,
+    duration,
+    src: videoSrc,
+  });
+
+  // Trim range change handlers
+  const handleTrimStartChange = useCallback(
+    (value: number) => {
+      setTrimRange((current) =>
+        normalizeTrimRange({ start: value, end: current.end }, duration)
+      );
+    },
+    [duration]
+  );
+
+  const handleTrimEndChange = useCallback(
+    (value: number) => {
+      setTrimRange((current) =>
+        normalizeTrimRange({ start: current.start, end: value }, duration)
+      );
+    },
+    [duration]
+  );
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    togglePlay,
+    seek,
+    currentTime,
+    trimStart: startSeconds,
+    trimEnd: endSeconds,
+    duration,
+    onTrimStartChange: handleTrimStartChange,
+    onTrimEndChange: handleTrimEndChange,
+    disabled: !probe || isTrimming,
+  });
+
   const disableSaveActions = !inputPath || !probe || isTrimming || endSeconds <= startSeconds;
   const exportDuration = useMemo(() => Math.max(0, endSeconds - startSeconds), [endSeconds, startSeconds]);
 
@@ -184,41 +208,34 @@ export default function App(): ReactElement {
 
   return (
     <main className="app-shell">
-      {inputPath && (
-        <video className="video-preview" controls src={toFileUrl(inputPath)}>
-          <track kind="captions" />
-        </video>
+      {inputPath && videoSrc && (
+        <VideoPlayer
+          src={videoSrc}
+          videoRef={videoRef}
+          isPlaying={isPlaying}
+          onTogglePlay={togglePlay}
+        />
       )}
 
       {probe && (
-        <TrimControls
-          duration={duration}
-          start={startSeconds}
-          end={endSeconds}
-          disabled={isTrimming}
-          onChangeStart={(value) =>
-            setTrimRange((current) =>
-              normalizeTrimRange(
-                {
-                  start: value,
-                  end: current.end
-                },
-                duration
-              )
-            )
-          }
-          onChangeEnd={(value) =>
-            setTrimRange((current) =>
-              normalizeTrimRange(
-                {
-                  start: current.start,
-                  end: value
-                },
-                duration
-              )
-            )
-          }
-        />
+        <>
+          <Timeline
+            duration={duration}
+            currentTime={currentTime}
+            trimStart={startSeconds}
+            trimEnd={endSeconds}
+            disabled={isTrimming}
+            onSeek={seek}
+            onTrimStartChange={handleTrimStartChange}
+            onTrimEndChange={handleTrimEndChange}
+          />
+          <PlaybackControls
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            duration={duration}
+            onTogglePlay={togglePlay}
+          />
+        </>
       )}
 
       {probe && (
@@ -246,7 +263,7 @@ export default function App(): ReactElement {
               {isTrimming ? "Trimming..." : "Overwrite Original"}
             </button>
             <button type="button" onClick={onSaveCopy} disabled={disableSaveActions}>
-              {isTrimming ? "Trimming..." : `Save Copy (${formatMmSs(exportDuration)})`}
+              {isTrimming ? "Trimming..." : `Save Copy (${formatTimestamp(exportDuration)})`}
             </button>
           </div>
         </div>

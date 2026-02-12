@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { access, constants } from "node:fs/promises";
+import { access, constants, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import ffmpegStatic from "ffmpeg-static";
@@ -36,6 +36,11 @@ export type TrimResult = {
   usedMode: "copy" | "reencode";
   error?: string;
 };
+
+function makeOverwriteTempPath(inputPath: string, jobId: string): string {
+  const parsed = path.parse(inputPath);
+  return path.join(parsed.dir, `${parsed.name}.trim-${jobId}${parsed.ext}`);
+}
 
 function withAsarUnpacked(binaryPath: string): string {
   return binaryPath.replace("app.asar\\", "app.asar.unpacked\\").replace("app.asar/", "app.asar.unpacked/");
@@ -284,4 +289,42 @@ export async function trimVideo(
   }
 
   return trimWithMode(request, "reencode", onProgress);
+}
+
+export async function overwriteVideo(
+  request: Omit<TrimRequest, "outputPath">,
+  onProgress: (value: number) => void
+): Promise<TrimResult> {
+  await validateInputVideo(request.inputPath);
+  await ensureWritableOutputPath(request.inputPath);
+
+  const tempOutputPath = await findAvailableOutputPath(makeOverwriteTempPath(request.inputPath, request.jobId));
+  const backupPath = await findAvailableOutputPath(`${request.inputPath}.bak`);
+
+  const trimResult = await trimVideo(
+    {
+      ...request,
+      outputPath: tempOutputPath
+    },
+    onProgress
+  );
+
+  if (!trimResult.ok) {
+    return trimResult;
+  }
+
+  let originalMoved = false;
+  try {
+    await rename(request.inputPath, backupPath);
+    originalMoved = true;
+    await rename(tempOutputPath, request.inputPath);
+    await rm(backupPath, { force: true });
+    return { ...trimResult, outputPath: request.inputPath };
+  } catch (error) {
+    if (originalMoved && !existsSync(request.inputPath) && existsSync(backupPath)) {
+      await rename(backupPath, request.inputPath);
+    }
+    await rm(tempOutputPath, { force: true });
+    throw error;
+  }
 }

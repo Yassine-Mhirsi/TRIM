@@ -15,7 +15,35 @@ type AppApi = {
     request: TrimRequest,
     onProgress: (value: number) => void
   ) => Promise<TrimResult>;
+  overwriteVideo: (
+    request: Omit<TrimRequest, "outputPath">,
+    onProgress: (value: number) => void
+  ) => Promise<TrimResult>;
 };
+
+function invokeWithProgress(
+  channel: string,
+  request: TrimRequest | Omit<TrimRequest, "outputPath">,
+  onProgress: (value: number) => void
+): Promise<TrimResult> {
+  return new Promise((resolve, reject) => {
+    const progressChannel = `trim:progress:${request.jobId}`;
+    const onProgressMessage = (
+      _event: Electron.IpcRendererEvent,
+      progress: number
+    ) => onProgress(progress);
+
+    ipcRenderer.on(progressChannel, onProgressMessage);
+
+    ipcRenderer
+      .invoke(channel, request)
+      .then((result: TrimResult) => resolve(result))
+      .catch((error: unknown) => reject(error))
+      .finally(() => {
+        ipcRenderer.removeListener(progressChannel, onProgressMessage);
+      });
+  });
+}
 
 const api: AppApi = {
   getInitialFile: () => ipcRenderer.invoke("app:get-initial-file"),
@@ -32,23 +60,9 @@ const api: AppApi = {
   chooseSavePath: (suggestedPath) =>
     ipcRenderer.invoke("dialog:save-as", suggestedPath),
   trimVideo: (request, onProgress) =>
-    new Promise((resolve, reject) => {
-      const channel = `trim:progress:${request.jobId}`;
-      const onProgressMessage = (
-        _event: Electron.IpcRendererEvent,
-        progress: number
-      ) => onProgress(progress);
-
-      ipcRenderer.on(channel, onProgressMessage);
-
-      ipcRenderer
-        .invoke("trim:start", request)
-        .then((result: TrimResult) => resolve(result))
-        .catch((error: unknown) => reject(error))
-        .finally(() => {
-          ipcRenderer.removeListener(channel, onProgressMessage);
-        });
-    })
+    invokeWithProgress("trim:start", request, onProgress),
+  overwriteVideo: (request, onProgress) =>
+    invokeWithProgress("trim:overwrite", request, onProgress)
 };
 
 contextBridge.exposeInMainWorld("trimApi", api);

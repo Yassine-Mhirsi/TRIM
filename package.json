@@ -57,6 +57,7 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
+      "assets/**/*",
       "node_modules/**/*",
       "package.json"
     ],
@@ -84,6 +85,7 @@
     "win": {
       "signAndEditExecutable": false,
       "verifyUpdateCodeSignature": false,
+      "icon": "assets/app-icon.png",
       "target": [
         "nsis"
       ]

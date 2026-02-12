@@ -16,6 +16,10 @@ declare global {
         request: TrimRequest,
         onProgress: (value: number) => void
       ) => Promise<TrimResult>;
+      overwriteVideo: (
+        request: Omit<TrimRequest, "outputPath">,
+        onProgress: (value: number) => void
+      ) => Promise<TrimResult>;
     };
   }
 }

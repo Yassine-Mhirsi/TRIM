@@ -95,7 +95,7 @@ export default function App(): ReactElement {
   );
   const startSeconds = normalizedTrimRange.start;
   const endSeconds = normalizedTrimRange.end;
-  const disableExport = !inputPath || !probe || isTrimming || endSeconds <= startSeconds;
+  const disableSaveActions = !inputPath || !probe || isTrimming || endSeconds <= startSeconds;
   const exportDuration = useMemo(() => Math.max(0, endSeconds - startSeconds), [endSeconds, startSeconds]);
 
   const chooseSaveAs = async (): Promise<void> => {
@@ -109,7 +109,7 @@ export default function App(): ReactElement {
     }
   };
 
-  const onTrim = async (): Promise<void> => {
+  const onSaveCopy = async (): Promise<void> => {
     if (!inputPath || !outputPath) {
       return;
     }
@@ -138,6 +138,45 @@ export default function App(): ReactElement {
       setOutputPath(nextSuggested);
     } catch (trimError) {
       setError(trimError instanceof Error ? trimError.message : "Trim failed.");
+    } finally {
+      setIsTrimming(false);
+    }
+  };
+
+  const onOverwriteOriginal = async (): Promise<void> => {
+    if (!inputPath) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "This will replace the original file with the selected trimmed section. Continue?"
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setIsTrimming(true);
+    setError(null);
+
+    try {
+      const result = await window.trimApi.overwriteVideo(
+        {
+          jobId: makeJobId(),
+          inputPath,
+          startSeconds,
+          endSeconds,
+          mode: "smart"
+        },
+        () => undefined
+      );
+
+      if (!result.ok) {
+        throw new Error(result.error ?? "Overwrite failed.");
+      }
+
+      await loadVideo(inputPath);
+    } catch (trimError) {
+      setError(trimError instanceof Error ? trimError.message : "Overwrite failed.");
     } finally {
       setIsTrimming(false);
     }
@@ -186,11 +225,28 @@ export default function App(): ReactElement {
         <div className="action-row">
           <div className="button-row">
             {isTrimming && <span className="spinner" aria-label="Trimming in progress" />}
-            <button type="button" onClick={chooseSaveAs} disabled={isTrimming}>
-              Save As
+            <button
+              type="button"
+              className="icon-button"
+              onClick={chooseSaveAs}
+              disabled={isTrimming}
+              aria-label="Choose destination file"
+              title={`Choose destination file${outputPath ? ` (${outputPath})` : ""}`}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h4.2c.6 0 1.18.24 1.6.66l1.18 1.18c.3.3.7.46 1.12.46H18.5A2.5 2.5 0 0 1 21 8.8v8.7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11Zm2.5-.5a.5.5 0 0 0-.5.5v11c0 .28.22.5.5.5h13a.5.5 0 0 0 .5-.5V8.8a.5.5 0 0 0-.5-.5h-4.88a3.58 3.58 0 0 1-2.53-1.05L9.9 6.08A.25.25 0 0 0 9.7 6H5.5Z" />
+              </svg>
             </button>
-            <button type="button" onClick={onTrim} disabled={disableExport}>
-              {isTrimming ? "Trimming..." : `Export (${formatMmSs(exportDuration)})`}
+            <button
+              type="button"
+              className="danger-button"
+              onClick={onOverwriteOriginal}
+              disabled={disableSaveActions}
+            >
+              {isTrimming ? "Trimming..." : "Overwrite Original"}
+            </button>
+            <button type="button" onClick={onSaveCopy} disabled={disableSaveActions}>
+              {isTrimming ? "Trimming..." : `Save Copy (${formatMmSs(exportDuration)})`}
             </button>
           </div>
         </div>

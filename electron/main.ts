@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import {
   findAvailableOutputPath,
   isSupportedVideo,
+  overwriteVideo,
   probeVideo,
   suggestOutputPath,
   trimVideo,
@@ -58,6 +59,7 @@ async function createWindow(): Promise<void> {
     height: 780,
     minWidth: 980,
     minHeight: 700,
+    icon: path.join(app.getAppPath(), "assets", "app-icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -145,6 +147,12 @@ ipcMain.handle("dialog:save-as", async (_event, suggestedPath: string) => {
 
 ipcMain.handle("trim:start", async (event, request: TrimRequest) => {
   return trimVideo(request, (progress) => {
+    event.sender.send(`trim:progress:${request.jobId}`, progress);
+  });
+});
+
+ipcMain.handle("trim:overwrite", async (event, request: Omit<TrimRequest, "outputPath">) => {
+  return overwriteVideo(request, (progress) => {
     event.sender.send(`trim:progress:${request.jobId}`, progress);
   });
 });

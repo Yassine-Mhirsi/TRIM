@@ -159,6 +159,31 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.icon-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #243065;
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.danger-button {
+  background: #7a2f3f;
+  border-color: #9a4355;
+}
+
+.danger-button:hover:not(:disabled) {
+  background: #8e3a4d;
+}
+
 .error {
   margin: 0;
   color: #ff7f7f;

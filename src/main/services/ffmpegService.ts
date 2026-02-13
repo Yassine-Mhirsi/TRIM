@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { access, constants, rename, rm } from "node:fs/promises";
+import { access, constants, copyFile, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import ffmpegStatic from "ffmpeg-static";
@@ -36,6 +36,53 @@ export type TrimResult = {
   usedMode: "copy" | "reencode";
   error?: string;
 };
+
+function isRetriableRenameError(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException | undefined)?.code;
+  return code === "EBUSY" || code === "EPERM" || code === "EACCES";
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function renameWithRetry(from: string, to: string, maxAttempts = 8): Promise<void> {
+  let attempt = 0;
+  let waitMs = 75;
+
+  while (true) {
+    try {
+      await rename(from, to);
+      return;
+    } catch (error) {
+      attempt += 1;
+      if (attempt >= maxAttempts || !isRetriableRenameError(error)) {
+        throw error;
+      }
+      await sleep(waitMs);
+      waitMs = Math.min(waitMs * 2, 1000);
+    }
+  }
+}
+
+async function copyWithRetry(from: string, to: string, maxAttempts = 8): Promise<void> {
+  let attempt = 0;
+  let waitMs = 75;
+
+  while (true) {
+    try {
+      await copyFile(from, to);
+      return;
+    } catch (error) {
+      attempt += 1;
+      if (attempt >= maxAttempts || !isRetriableRenameError(error)) {
+        throw error;
+      }
+      await sleep(waitMs);
+      waitMs = Math.min(waitMs * 2, 1000);
+    }
+  }
+}
 
 function makeOverwriteTempPath(inputPath: string, jobId: string): string {
   const parsed = path.parse(inputPath);
@@ -315,14 +362,33 @@ export async function overwriteVideo(
 
   let originalMoved = false;
   try {
-    await rename(request.inputPath, backupPath);
+    await renameWithRetry(request.inputPath, backupPath);
     originalMoved = true;
-    await rename(tempOutputPath, request.inputPath);
+    await renameWithRetry(tempOutputPath, request.inputPath);
     await rm(backupPath, { force: true });
     return { ...trimResult, outputPath: request.inputPath };
   } catch (error) {
+    if (!originalMoved && isRetriableRenameError(error)) {
+      let backupCreated = false;
+      try {
+        // Fallback for Windows Explorer locks that block rename/delete sharing.
+        await copyWithRetry(request.inputPath, backupPath);
+        backupCreated = true;
+        await copyWithRetry(tempOutputPath, request.inputPath);
+        await rm(tempOutputPath, { force: true });
+        await rm(backupPath, { force: true });
+        return { ...trimResult, outputPath: request.inputPath };
+      } catch (copyFallbackError) {
+        if (backupCreated && existsSync(backupPath)) {
+          await copyWithRetry(backupPath, request.inputPath);
+        }
+        await rm(tempOutputPath, { force: true });
+        throw copyFallbackError;
+      }
+    }
+
     if (originalMoved && !existsSync(request.inputPath) && existsSync(backupPath)) {
-      await rename(backupPath, request.inputPath);
+      await renameWithRetry(backupPath, request.inputPath);
     }
     await rm(tempOutputPath, { force: true });
     throw error;

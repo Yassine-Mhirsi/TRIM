@@ -32,6 +32,7 @@ export default function App(): ReactElement {
   const [trimRange, setTrimRange] = useState<TrimRange>({ start: 0, end: 0 });
   const [outputPath, setOutputPath] = useState<string>("");
   const [isTrimming, setIsTrimming] = useState(false);
+  const [isDetachingVideoForOverwrite, setIsDetachingVideoForOverwrite] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -77,7 +78,7 @@ export default function App(): ReactElement {
   const endSeconds = normalizedTrimRange.end;
 
   // Video player hook — pass inputPath so effects re-run when the video element mounts
-  const videoSrc = inputPath ? toFileUrl(inputPath) : null;
+  const videoSrc = inputPath && !isDetachingVideoForOverwrite ? toFileUrl(inputPath) : null;
   const { currentTime, isPlaying, playbackSpeed, togglePlay, seek, setPlaybackSpeed } = useVideoPlayer({
     videoRef,
     trimStart: startSeconds,
@@ -170,6 +171,7 @@ export default function App(): ReactElement {
     if (!inputPath) {
       return;
     }
+    const originalPath = inputPath;
 
     const confirmed = window.confirm(
       "This will replace the original file with the selected trimmed section. Continue?"
@@ -180,12 +182,15 @@ export default function App(): ReactElement {
 
     setIsTrimming(true);
     setError(null);
+    setIsDetachingVideoForOverwrite(true);
 
     try {
+      // Give the <video> element a tick to unmount and release file handles on Windows.
+      await new Promise((resolve) => setTimeout(resolve, 75));
       const result = await window.trimApi.overwriteVideo(
         {
           jobId: makeJobId(),
-          inputPath,
+          inputPath: originalPath,
           startSeconds,
           endSeconds,
           mode: "smart"
@@ -197,10 +202,11 @@ export default function App(): ReactElement {
         throw new Error(result.error ?? "Overwrite failed.");
       }
 
-      await loadVideo(inputPath);
+      await loadVideo(originalPath);
     } catch (trimError) {
       setError(trimError instanceof Error ? trimError.message : "Overwrite failed.");
     } finally {
+      setIsDetachingVideoForOverwrite(false);
       setIsTrimming(false);
     }
   };

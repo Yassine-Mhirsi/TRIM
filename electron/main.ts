@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -54,12 +54,21 @@ function sendFileToRenderer(filePath: string): void {
 }
 
 async function createWindow(): Promise<void> {
+  // Remove the default menu bar entirely
+  Menu.setApplicationMenu(null);
+
   mainWindow = new BrowserWindow({
     width: 1160,
     height: 780,
     minWidth: 980,
     minHeight: 700,
     icon: path.join(app.getAppPath(), "assets", "app-icon.png"),
+    titleBarStyle: "hidden",
+    titleBarOverlay: {
+      color: "#0f1222",
+      symbolColor: "#8891b3",
+      height: 40
+    },
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

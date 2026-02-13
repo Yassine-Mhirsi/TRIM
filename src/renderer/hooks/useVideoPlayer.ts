@@ -13,8 +13,10 @@ type UseVideoPlayerReturn = {
   currentTime: number;
   isPlaying: boolean;
   isBuffering: boolean;
+  playbackSpeed: number;
   togglePlay: () => void;
   seek: (timeSeconds: number) => void;
+  setPlaybackSpeed: (speed: number) => void;
 };
 
 export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerReturn {
@@ -23,6 +25,7 @@ export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerRe
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [playbackSpeed, setPlaybackSpeedState] = useState(1);
 
   // Refs to avoid stale closures in RAF loop and event handlers
   const trimStartRef = useRef(trimStart);
@@ -115,6 +118,13 @@ export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerRe
     }
   }, [trimStart, videoRef]);
 
+  // Sync playback speed to video element
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.playbackRate = playbackSpeed;
+  }, [playbackSpeed, videoRef, src]);
+
   const seek = useCallback(
     (timeSeconds: number): void => {
       const video = videoRef.current;
@@ -143,5 +153,9 @@ export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerRe
     }
   }, [videoRef]);
 
-  return { currentTime, isPlaying, isBuffering, togglePlay, seek };
+  const setPlaybackSpeed = useCallback((speed: number): void => {
+    setPlaybackSpeedState(speed);
+  }, []);
+
+  return { currentTime, isPlaying, isBuffering, playbackSpeed, togglePlay, seek, setPlaybackSpeed };
 }

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import VideoPlayer from "./components/VideoPlayer";
 import Timeline from "./components/Timeline";
-import PlaybackControls from "./components/PlaybackControls";
 import { useVideoPlayer } from "./hooks/useVideoPlayer";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { normalizeTrimRange, type TrimRange } from "./utils/math";
@@ -79,7 +78,7 @@ export default function App(): ReactElement {
 
   // Video player hook — pass inputPath so effects re-run when the video element mounts
   const videoSrc = inputPath ? toFileUrl(inputPath) : null;
-  const { currentTime, isPlaying, togglePlay, seek } = useVideoPlayer({
+  const { currentTime, isPlaying, playbackSpeed, togglePlay, seek, setPlaybackSpeed } = useVideoPlayer({
     videoRef,
     trimStart: startSeconds,
     trimEnd: endSeconds,
@@ -208,39 +207,36 @@ export default function App(): ReactElement {
 
   return (
     <main className="app-shell">
+      {/* Titlebar drag region */}
+      <div className="titlebar-drag-region" />
+
       {inputPath && videoSrc && (
         <VideoPlayer
           src={videoSrc}
           videoRef={videoRef}
           isPlaying={isPlaying}
+          playbackSpeed={playbackSpeed}
           onTogglePlay={togglePlay}
+          onSpeedChange={setPlaybackSpeed}
         />
       )}
 
       {probe && (
-        <>
-          <Timeline
-            duration={duration}
-            currentTime={currentTime}
-            trimStart={startSeconds}
-            trimEnd={endSeconds}
-            disabled={isTrimming}
-            onSeek={seek}
-            onTrimStartChange={handleTrimStartChange}
-            onTrimEndChange={handleTrimEndChange}
-          />
-          <PlaybackControls
-            isPlaying={isPlaying}
-            currentTime={currentTime}
-            duration={duration}
-            onTogglePlay={togglePlay}
-          />
-        </>
+        <Timeline
+          duration={duration}
+          currentTime={currentTime}
+          trimStart={startSeconds}
+          trimEnd={endSeconds}
+          disabled={isTrimming}
+          onSeek={seek}
+          onTrimStartChange={handleTrimStartChange}
+          onTrimEndChange={handleTrimEndChange}
+        />
       )}
 
       {probe && (
-        <div className="action-row">
-          <div className="button-row">
+        <div className="controls-actions-row">
+          <div className="action-buttons">
             {isTrimming && <span className="spinner" aria-label="Trimming in progress" />}
             <button
               type="button"
@@ -256,13 +252,18 @@ export default function App(): ReactElement {
             </button>
             <button
               type="button"
-              className="danger-button"
+              className="action-button-danger"
               onClick={onOverwriteOriginal}
               disabled={disableSaveActions}
             >
               {isTrimming ? "Trimming..." : "Overwrite Original"}
             </button>
-            <button type="button" onClick={onSaveCopy} disabled={disableSaveActions}>
+            <button
+              type="button"
+              className="action-button-primary"
+              onClick={onSaveCopy}
+              disabled={disableSaveActions}
+            >
               {isTrimming ? "Trimming..." : `Save Copy (${formatTimestamp(exportDuration)})`}
             </button>
           </div>

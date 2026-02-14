@@ -60,8 +60,8 @@ async function createWindow(): Promise<void> {
   mainWindow = new BrowserWindow({
     width: 1160,
     height: 780,
-    minWidth: 980,
-    minHeight: 700,
+    minWidth: 640,
+    minHeight: 480,
     icon: path.join(app.getAppPath(), "assets", "app-icon.png"),
     titleBarStyle: "hidden",
     titleBarOverlay: {

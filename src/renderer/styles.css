@@ -11,6 +11,12 @@ body {
   margin: 0;
   background: #0f1222;
   color: #f6f7ff;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
 }
 
 /* ========== CUSTOM TITLEBAR ========== */
@@ -27,11 +33,12 @@ body {
 }
 
 .app-shell {
-  max-width: 980px;
-  margin: 0 auto;
+  height: 100%;
   padding: 50px 24px 24px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
+  overflow: hidden;
 }
 
 /* ========== VIDEO PLAYER ROW (video + speed slider) ========== */
@@ -40,6 +47,8 @@ body {
   display: flex;
   gap: 12px;
   align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .video-player-container {
@@ -50,18 +59,24 @@ body {
   cursor: pointer;
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .video-player-container .video-preview {
   display: block;
   width: 100%;
-  max-height: 520px;
+  height: 100%;
+  object-fit: contain;
   border-radius: 0;
 }
 
 .video-preview {
   width: 100%;
-  max-height: 520px;
+  height: 100%;
+  object-fit: contain;
   background: #05060c;
 }
 

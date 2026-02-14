@@ -2,8 +2,6 @@ import { existsSync } from "node:fs";
 import { access, constants, copyFile, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import ffmpegStatic from "ffmpeg-static";
-const ffprobeStatic = require("ffprobe-static") as { path: string };
 
 const SUPPORTED_EXTENSIONS = new Set([
   ".mp4",
@@ -89,58 +87,48 @@ function makeOverwriteTempPath(inputPath: string, jobId: string): string {
   return path.join(parsed.dir, `${parsed.name}.trim-${jobId}${parsed.ext}`);
 }
 
-function withAsarUnpacked(binaryPath: string): string {
-  return binaryPath.replace("app.asar\\", "app.asar.unpacked\\").replace("app.asar/", "app.asar.unpacked/");
-}
-
 function resolveFfprobePath(): string {
-  const arch = process.arch === "ia32" ? "ia32" : "x64";
   const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
-  const packagedPath = resourcesPath
-    ? path.join(resourcesPath, "ffprobe", "bin", "win32", arch, "ffprobe.exe")
-    : "";
-  if (existsSync(packagedPath)) {
-    return packagedPath;
+  if (resourcesPath) {
+    const packagedPath = path.join(resourcesPath, "ffprobe", "ffprobe.exe");
+    if (existsSync(packagedPath)) {
+      return packagedPath;
+    }
   }
 
-  const modulePath = ffprobeStatic.path;
-  if (!modulePath) {
-    throw new Error("ffprobe binary was not found.");
+  // Dev fallback: resolve from the npm package
+  try {
+    const ffprobeStatic = require("ffprobe-static") as { path: string };
+    if (ffprobeStatic.path && existsSync(ffprobeStatic.path)) {
+      return ffprobeStatic.path;
+    }
+  } catch {
+    // Package not available in production — expected
   }
 
-  if (existsSync(modulePath)) {
-    return modulePath;
-  }
-
-  const unpackedPath = withAsarUnpacked(modulePath);
-  if (existsSync(unpackedPath)) {
-    return unpackedPath;
-  }
-
-  throw new Error(`ffprobe binary was not found at: ${modulePath}`);
+  throw new Error("ffprobe binary was not found.");
 }
 
 function resolveFfmpegPath(): string {
   const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
-  const packagedPath = resourcesPath ? path.join(resourcesPath, "ffmpeg", "ffmpeg.exe") : "";
-  if (existsSync(packagedPath)) {
-    return packagedPath;
+  if (resourcesPath) {
+    const packagedPath = path.join(resourcesPath, "ffmpeg", "ffmpeg.exe");
+    if (existsSync(packagedPath)) {
+      return packagedPath;
+    }
   }
 
-  if (!ffmpegStatic) {
-    throw new Error("ffmpeg binary was not found.");
+  // Dev fallback: resolve from the npm package
+  try {
+    const ffmpegStatic = require("ffmpeg-static") as string;
+    if (ffmpegStatic && existsSync(ffmpegStatic)) {
+      return ffmpegStatic;
+    }
+  } catch {
+    // Package not available in production — expected
   }
 
-  if (existsSync(ffmpegStatic)) {
-    return ffmpegStatic;
-  }
-
-  const unpackedPath = withAsarUnpacked(ffmpegStatic);
-  if (existsSync(unpackedPath)) {
-    return unpackedPath;
-  }
-
-  throw new Error(`ffmpeg binary was not found at: ${ffmpegStatic}`);
+  throw new Error("ffmpeg binary was not found.");
 }
 
 function timestampFromSeconds(totalSeconds: number): string {

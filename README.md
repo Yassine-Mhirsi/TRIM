@@ -4,9 +4,13 @@ A fast, minimal Windows desktop app for trimming videos. Select a portion of any
 
 Built with Electron, React, and FFmpeg.
 
-## Screenshot
+## Screenshots
 
 ![Trim app](assets/Screenshot.png)
+
+Right-click any video in Windows Explorer to open it directly in Trim:
+
+![Right-click context menu](assets/Screenshot2.png)
 
 ## Features
 

@@ -1,28 +1,72 @@
-# TRIM
+# Trim
 
-Windows desktop app for trimming videos with FFmpeg.
+A fast, minimal Windows desktop app for trimming videos. Select a portion of any video with a visual timeline, then save it as a new file or overwrite the original.
+
+Built with Electron, React, and FFmpeg.
+
+## Screenshot
+
+![Trim app](assets/Screenshot.png)
+
+## Features
+
+- **Visual timeline** with draggable handles to set trim start and end points
+- **Three trim modes** — smart (tries fast copy first, falls back to re-encode), stream copy, or full re-encode
+- **Overwrite or Save As** — replace the original file or export to a new one
+- **Variable playback speed** from 0.25x to 16x
+- **Keyboard shortcuts** for efficient editing
+- **Right-click integration** — open videos directly from Windows Explorer
+- **Supports** MP4, MOV, MKV, WebM, AVI, and M4V
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|---|---|
+| `Space` | Play / Pause |
+| `Left Arrow` | Seek backward 5s |
+| `Right Arrow` | Seek forward 5s |
+| `Shift + Left Arrow` | Seek backward 1s |
+| `Shift + Right Arrow` | Seek forward 1s |
+| `[` | Set trim start to current time |
+| `]` | Set trim end to current time |
+| `Home` | Jump to trim start |
+| `End` | Jump to trim end |
+
+## Installation
+
+Download the latest installer from the [Releases](https://github.com/Yassine-Mhirsi/TRIM/releases) page and run the `.exe` setup.
 
 ## Development
 
-- Install dependencies: `npm ci`
-- Run app in development: `npm run dev`
-- Build production bundles: `npm run build`
-- Build Windows installer: `npm run dist`
+### Prerequisites
 
-## GitHub Release (.exe download)
+- Node.js 20+
+- npm
 
-This repo includes a workflow at `.github/workflows/release.yml` that:
+### Setup
 
-1. Runs when you push a git tag that starts with `v` (example: `v0.1.0`)
-2. Builds the Windows NSIS installer (`.exe`)
-3. Uploads release artifacts to the GitHub Releases page
+```bash
+git clone https://github.com/Yassine-Mhirsi/TRIM.git
+cd TRIM
+npm install
+```
 
-### Release steps
+### Commands
 
-1. Ensure `package.json` version matches your intended release (example: `0.1.1`)
-2. Commit and push your changes
-3. Create and push a tag:
-   - `git tag v0.1.1`
-   - `git push origin v0.1.1`
-4. Open GitHub Actions and wait for `Build and Release Windows` to finish
-5. Download the installer from the new GitHub Release
+```bash
+npm run dev          # Start dev mode (Vite + Electron)
+npm run build        # Typecheck + build renderer + build Electron
+npm run dist         # Build Windows NSIS installer (.exe)
+npm run lint         # ESLint
+npm run typecheck    # TypeScript check without emit
+```
+
+## Tech Stack
+
+- **Frontend:** React, TypeScript, Vite
+- **Desktop:** Electron, electron-builder (NSIS installer)
+- **Video:** FFmpeg / FFprobe via fluent-ffmpeg (bundled as static binaries)
+
+## License
+
+MIT

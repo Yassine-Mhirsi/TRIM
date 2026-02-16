@@ -19,6 +19,7 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 - **Overwrite or Save As** — replace the original file or export to a new one
 - **Variable playback speed** from 0.25x to 16x
 - **Volume control** with mute toggle
+- **Automatic updates** — stay up-to-date with the latest features and fixes
 - **Keyboard shortcuts** for efficient editing
 - **Right-click integration** — open videos directly from Windows Explorer
 - **Supports** MP4, MOV, MKV, WebM, AVI, and M4V
@@ -69,7 +70,7 @@ npm run typecheck    # TypeScript check without emit
 ## Tech Stack
 
 - **Frontend:** React, TypeScript, Vite
-- **Desktop:** Electron, electron-builder (NSIS installer)
+- **Desktop:** Electron, electron-builder, electron-updater (NSIS installer with auto-updates)
 - **Video:** FFmpeg / FFprobe via fluent-ffmpeg (bundled as static binaries)
 
 ## License

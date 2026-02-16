@@ -1,6 +1,6 @@
 {
   "name": "trim",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "npm run build:electron && concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",

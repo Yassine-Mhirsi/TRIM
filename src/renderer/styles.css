@@ -160,7 +160,7 @@ body {
 
 .volume-slider-popup {
   position: absolute;
-  bottom: calc(100% + 7px);
+  bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
   background: rgba(23, 26, 44, 0.95);

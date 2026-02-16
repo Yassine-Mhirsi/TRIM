@@ -687,6 +687,18 @@ button:hover:not(:disabled) {
   }
 }
 
+/* ========== DRAG & DROP ========== */
+
+.app-shell.drag-over::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  border: 3px solid #657cff;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 200;
+}
+
 /* ========== EMPTY STATE ========== */
 
 .empty-state {
@@ -702,6 +714,74 @@ button:hover:not(:disabled) {
   margin: 0;
   color: #8891b3;
   font-size: 15px;
+}
+
+.empty-state-hint {
+  margin: 0;
+  color: #4a5070;
+  font-size: 13px;
+}
+
+/* ========== RECENT FILES ========== */
+
+.recent-files {
+  margin-top: 24px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.recent-files-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4a5070;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.recent-files-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recent-file-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #c8cce6;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.recent-file-button:hover {
+  background: #1a1f3a;
+  border-color: #2a3a6b;
+}
+
+.recent-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-file-dir {
+  color: #4a5070;
+  font-size: 12px;
+  margin-left: 12px;
+  flex-shrink: 0;
 }
 
 /* ========== UPDATE BANNER ========== */

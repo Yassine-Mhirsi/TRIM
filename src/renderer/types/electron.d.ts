@@ -12,6 +12,9 @@ declare global {
       getInitialFile: () => Promise<string | null>;
       openVideo: () => Promise<string | null>;
       onFileOpened: (handler: (filePath: string) => void) => () => void;
+      getRecentFiles: () => Promise<string[]>;
+      addRecentFile: (filePath: string) => Promise<void>;
+      getDroppedFilePath: (file: File) => string;
       probeVideo: (filePath: string) => Promise<VideoProbeResult>;
       suggestOutputPath: (inputPath: string) => Promise<string>;
       chooseSavePath: (suggestedPath: string) => Promise<string | null>;

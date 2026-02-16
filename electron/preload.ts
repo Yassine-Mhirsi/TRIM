@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type {
   TrimRequest,
   TrimResult,
@@ -9,6 +9,9 @@ type AppApi = {
   getInitialFile: () => Promise<string | null>;
   openVideo: () => Promise<string | null>;
   onFileOpened: (handler: (filePath: string) => void) => () => void;
+  getRecentFiles: () => Promise<string[]>;
+  addRecentFile: (filePath: string) => Promise<void>;
+  getDroppedFilePath: (file: File) => string;
   probeVideo: (filePath: string) => Promise<VideoProbeResult>;
   suggestOutputPath: (inputPath: string) => Promise<string>;
   chooseSavePath: (suggestedPath: string) => Promise<string | null>;
@@ -55,6 +58,9 @@ function invokeWithProgress(
 const api: AppApi = {
   getInitialFile: () => ipcRenderer.invoke("app:get-initial-file"),
   openVideo: () => ipcRenderer.invoke("dialog:open-video"),
+  getRecentFiles: () => ipcRenderer.invoke("recent-files:get"),
+  addRecentFile: (filePath: string) => ipcRenderer.invoke("recent-files:add", filePath),
+  getDroppedFilePath: (file: File) => webUtils.getPathForFile(file),
   onFileOpened: (handler) => {
     const listener = (_event: Electron.IpcRendererEvent, filePath: string) => {
       handler(filePath);

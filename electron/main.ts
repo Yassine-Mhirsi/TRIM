@@ -13,6 +13,7 @@ import {
   validateInputVideo,
   type TrimRequest
 } from "../src/main/services/ffmpegService";
+import { addRecentFile, getRecentFiles } from "../src/main/services/recentFiles";
 
 let mainWindow: BrowserWindow | null = null;
 let pendingFilePath: string | null = null;
@@ -46,6 +47,7 @@ function extractFileArg(argv: string[]): string | null {
 }
 
 function sendFileToRenderer(filePath: string): void {
+  addRecentFile(filePath);
   if (!mainWindow || mainWindow.isDestroyed()) {
     pendingFilePath = filePath;
     return;
@@ -198,7 +200,16 @@ app.on("activate", async () => {
 ipcMain.handle("app:get-initial-file", async () => {
   const fileToReturn = pendingFilePath;
   pendingFilePath = null;
+  if (fileToReturn) addRecentFile(fileToReturn);
   return fileToReturn;
+});
+
+ipcMain.handle("recent-files:get", () => {
+  return getRecentFiles();
+});
+
+ipcMain.handle("recent-files:add", (_event, filePath: string) => {
+  addRecentFile(filePath);
 });
 
 ipcMain.handle("trim:probe", async (_event, filePath: string) => {
@@ -227,7 +238,11 @@ ipcMain.handle("dialog:open-video", async () => {
   }
 
   const filePath = filePaths[0];
-  return isSupportedVideo(filePath) ? filePath : null;
+  if (isSupportedVideo(filePath)) {
+    addRecentFile(filePath);
+    return filePath;
+  }
+  return null;
 });
 
 ipcMain.handle("dialog:save-as", async (_event, suggestedPath: string) => {

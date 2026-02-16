@@ -6,6 +6,18 @@ import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { normalizeTrimRange, type TrimRange } from "./utils/math";
 import { formatTimestamp } from "./utils/time";
 
+const SUPPORTED_EXTENSIONS = new Set([".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v"]);
+
+function fileName(fullPath: string): string {
+  return fullPath.replace(/^.*[\\/]/, "");
+}
+
+function parentDir(fullPath: string): string {
+  const parts = fullPath.replace(/\\/g, "/").split("/");
+  parts.pop();
+  return parts.pop() ?? "";
+}
+
 type ProbeResult = {
   durationSeconds: number;
   width: number;
@@ -39,6 +51,8 @@ export default function App(): ReactElement {
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [updateReady, setUpdateReady] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [recentFiles, setRecentFiles] = useState<string[]>([]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -52,6 +66,8 @@ export default function App(): ReactElement {
       setTrimRange(normalizeTrimRange({ start: 0, end: metadata.durationSeconds }, metadata.durationSeconds));
       const suggested = await window.trimApi.suggestOutputPath(nextPath);
       setOutputPath(suggested);
+      await window.trimApi.addRecentFile(nextPath);
+      window.trimApi.getRecentFiles().then(setRecentFiles);
     } catch (loadError) {
       setProbe(null);
       setTrimRange({ start: 0, end: 0 });
@@ -80,6 +96,8 @@ export default function App(): ReactElement {
   }, []);
 
   useEffect(() => {
+    window.trimApi.getRecentFiles().then(setRecentFiles);
+
     window.trimApi.getInitialFile().then((filePath) => {
       if (filePath) {
         void loadVideo(filePath);
@@ -244,6 +262,40 @@ export default function App(): ReactElement {
     }
   };
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+
+    const filePath = window.trimApi.getDroppedFilePath(file);
+    if (!filePath) return;
+
+    const ext = filePath.slice(filePath.lastIndexOf(".")).toLowerCase();
+    if (!SUPPORTED_EXTENSIONS.has(ext)) {
+      setError("Unsupported file format. Supported: MP4, MOV, MKV, WebM, AVI, M4V.");
+      return;
+    }
+
+    void loadVideo(filePath);
+  }, [loadVideo]);
+
   const handleOpenVideo = useCallback(async () => {
     setError(null);
     try {
@@ -257,7 +309,13 @@ export default function App(): ReactElement {
   }, [loadVideo]);
 
   return (
-    <main className="app-shell">
+    <main
+      className={`app-shell${isDragOver ? " drag-over" : ""}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+    >
       {/* Titlebar drag region */}
       <div className="titlebar-drag-region">
         <span className="titlebar-version">TRIM (v{__APP_VERSION__})</span>
@@ -272,6 +330,27 @@ export default function App(): ReactElement {
           <button type="button" className="action-button-primary" onClick={handleOpenVideo}>
             Open Video
           </button>
+          <p className="empty-state-hint">or drag & drop a video file</p>
+          {recentFiles.length > 0 && (
+            <div className="recent-files">
+              <h3 className="recent-files-title">Recent Files</h3>
+              <ul className="recent-files-list">
+                {recentFiles.map((filePath) => (
+                  <li key={filePath}>
+                    <button
+                      type="button"
+                      className="recent-file-button"
+                      onClick={() => void loadVideo(filePath)}
+                      title={filePath}
+                    >
+                      <span className="recent-file-name">{fileName(filePath)}</span>
+                      <span className="recent-file-dir">{parentDir(filePath)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

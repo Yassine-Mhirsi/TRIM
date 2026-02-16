@@ -14,9 +14,13 @@ type UseVideoPlayerReturn = {
   isPlaying: boolean;
   isBuffering: boolean;
   playbackSpeed: number;
+  volume: number;
+  isMuted: boolean;
   togglePlay: () => void;
   seek: (timeSeconds: number) => void;
   setPlaybackSpeed: (speed: number) => void;
+  setVolume: (volume: number) => void;
+  toggleMute: () => void;
 };
 
 export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerReturn {
@@ -26,6 +30,8 @@ export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerRe
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
+  const [volume, setVolumeState] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
 
   // Refs to avoid stale closures in RAF loop and event handlers
   const trimStartRef = useRef(trimStart);
@@ -125,6 +131,14 @@ export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerRe
     video.playbackRate = playbackSpeed;
   }, [playbackSpeed, videoRef, src]);
 
+  // Sync volume and mute state to video element
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.volume = volume;
+    video.muted = isMuted;
+  }, [volume, isMuted, videoRef, src]);
+
   const seek = useCallback(
     (timeSeconds: number): void => {
       const video = videoRef.current;
@@ -157,5 +171,17 @@ export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerRe
     setPlaybackSpeedState(speed);
   }, []);
 
-  return { currentTime, isPlaying, isBuffering, playbackSpeed, togglePlay, seek, setPlaybackSpeed };
+  const setVolume = useCallback((v: number): void => {
+    const clamped = Math.max(0, Math.min(1, v));
+    setVolumeState(clamped);
+    if (clamped > 0 && isMuted) {
+      setIsMuted(false);
+    }
+  }, [isMuted]);
+
+  const toggleMute = useCallback((): void => {
+    setIsMuted((prev) => !prev);
+  }, []);
+
+  return { currentTime, isPlaying, isBuffering, playbackSpeed, volume, isMuted, togglePlay, seek, setPlaybackSpeed, setVolume, toggleMute };
 }

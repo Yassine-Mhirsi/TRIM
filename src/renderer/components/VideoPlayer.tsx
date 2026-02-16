@@ -1,17 +1,22 @@
 import type { ReactElement, RefObject } from "react";
 import SpeedControl from "./SpeedControl";
+import VolumeControl from "./VolumeControl";
 
 type VideoPlayerProps = {
   src: string;
   videoRef: RefObject<HTMLVideoElement | null>;
   isPlaying: boolean;
   playbackSpeed: number;
+  volume: number;
+  isMuted: boolean;
   onTogglePlay: () => void;
   onSpeedChange: (speed: number) => void;
+  onVolumeChange: (volume: number) => void;
+  onToggleMute: () => void;
 };
 
 export default function VideoPlayer(props: VideoPlayerProps): ReactElement {
-  const { src, videoRef, isPlaying, playbackSpeed, onTogglePlay, onSpeedChange } = props;
+  const { src, videoRef, isPlaying, playbackSpeed, volume, isMuted, onTogglePlay, onSpeedChange, onVolumeChange, onToggleMute } = props;
 
   return (
     <div className="video-player-row">
@@ -31,6 +36,14 @@ export default function VideoPlayer(props: VideoPlayerProps): ReactElement {
             </svg>
           </div>
         )}
+        <div className="video-bottom-controls" onClick={(e) => e.stopPropagation()}>
+          <VolumeControl
+            volume={volume}
+            isMuted={isMuted}
+            onVolumeChange={onVolumeChange}
+            onToggleMute={onToggleMute}
+          />
+        </div>
       </div>
       <SpeedControl speed={playbackSpeed} onSpeedChange={onSpeedChange} />
     </div>

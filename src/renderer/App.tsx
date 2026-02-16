@@ -79,7 +79,7 @@ export default function App(): ReactElement {
 
   // Video player hook — pass inputPath so effects re-run when the video element mounts
   const videoSrc = inputPath && !isDetachingVideoForOverwrite ? toFileUrl(inputPath) : null;
-  const { currentTime, isPlaying, playbackSpeed, togglePlay, seek, setPlaybackSpeed } = useVideoPlayer({
+  const { currentTime, isPlaying, playbackSpeed, volume, isMuted, togglePlay, seek, setPlaybackSpeed, setVolume, toggleMute } = useVideoPlayer({
     videoRef,
     trimStart: startSeconds,
     trimEnd: endSeconds,
@@ -243,8 +243,12 @@ export default function App(): ReactElement {
           videoRef={videoRef}
           isPlaying={isPlaying}
           playbackSpeed={playbackSpeed}
+          volume={volume}
+          isMuted={isMuted}
           onTogglePlay={togglePlay}
           onSpeedChange={setPlaybackSpeed}
+          onVolumeChange={setVolume}
+          onToggleMute={toggleMute}
         />
       )}
 

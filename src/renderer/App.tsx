@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import VideoPlayer from "./components/VideoPlayer";
 import Timeline from "./components/Timeline";
+import ShortcutsOverlay from "./components/ShortcutsOverlay";
 import { useVideoPlayer } from "./hooks/useVideoPlayer";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { normalizeTrimRange, type TrimRange } from "./utils/math";
@@ -53,6 +54,7 @@ export default function App(): ReactElement {
   const [showInfo, setShowInfo] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -154,6 +156,10 @@ export default function App(): ReactElement {
     setShowInfo((prev) => !prev);
   }, []);
 
+  const handleToggleShortcuts = useCallback(() => {
+    setShowShortcuts((prev) => !prev);
+  }, []);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     togglePlay,
@@ -167,6 +173,7 @@ export default function App(): ReactElement {
     onTrimStartChange: handleTrimStartChange,
     onTrimEndChange: handleTrimEndChange,
     onToggleInfo: handleToggleInfo,
+    onToggleShortcuts: handleToggleShortcuts,
     disabled: !probe || isTrimming,
   });
 
@@ -479,6 +486,8 @@ export default function App(): ReactElement {
       )}
 
       {error && <p className="error">{error}</p>}
+
+      {showShortcuts && <ShortcutsOverlay onClose={handleToggleShortcuts} />}
     </main>
   );
 }

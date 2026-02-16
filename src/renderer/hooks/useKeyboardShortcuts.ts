@@ -13,6 +13,7 @@ type UseKeyboardShortcutsOptions = {
   onTrimStartChange: (time: number) => void;
   onTrimEndChange: (time: number) => void;
   onToggleInfo: () => void;
+  onToggleShortcuts: () => void;
   disabled: boolean;
 };
 
@@ -29,6 +30,7 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
     onTrimStartChange,
     onTrimEndChange,
     onToggleInfo,
+    onToggleShortcuts,
     disabled,
   } = options;
 
@@ -40,6 +42,24 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
   const trimEndRef = useRef(trimEnd);
   trimStartRef.current = trimStart;
   trimEndRef.current = trimEnd;
+
+  // ? shortcut always active (even without a loaded video)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent): void => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+      if (e.key === "?") {
+        e.preventDefault();
+        onToggleShortcuts();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onToggleShortcuts]);
 
   useEffect(() => {
     if (disabled) return;

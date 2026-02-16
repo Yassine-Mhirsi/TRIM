@@ -28,6 +28,7 @@
   "description": "Windows video trimmer desktop app",
   "private": true,
   "dependencies": {
+    "electron-updater": "^6.7.3",
     "fluent-ffmpeg": "^2.1.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
@@ -77,6 +78,11 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "include": "build/installer.nsh"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Yassine-Mhirsi",
+      "repo": "TRIM"
     },
     "win": {
       "signAndEditExecutable": false,

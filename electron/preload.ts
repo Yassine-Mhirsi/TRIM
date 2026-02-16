@@ -20,6 +20,12 @@ type AppApi = {
     request: Omit<TrimRequest, "outputPath">,
     onProgress: (value: number) => void
   ) => Promise<TrimResult>;
+  onUpdateAvailable: (handler: (version: string) => void) => () => void;
+  onDownloadProgress: (handler: (percent: number) => void) => () => void;
+  onUpdateDownloaded: (handler: (version: string) => void) => () => void;
+  checkForUpdates: () => Promise<void>;
+  downloadUpdate: () => Promise<void>;
+  installUpdate: () => void;
 };
 
 function invokeWithProgress(
@@ -64,7 +70,25 @@ const api: AppApi = {
   trimVideo: (request, onProgress) =>
     invokeWithProgress("trim:start", request, onProgress),
   overwriteVideo: (request, onProgress) =>
-    invokeWithProgress("trim:overwrite", request, onProgress)
+    invokeWithProgress("trim:overwrite", request, onProgress),
+  onUpdateAvailable: (handler) => {
+    const listener = (_event: Electron.IpcRendererEvent, version: string) => handler(version);
+    ipcRenderer.on("updater:update-available", listener);
+    return () => ipcRenderer.removeListener("updater:update-available", listener);
+  },
+  onDownloadProgress: (handler) => {
+    const listener = (_event: Electron.IpcRendererEvent, percent: number) => handler(percent);
+    ipcRenderer.on("updater:download-progress", listener);
+    return () => ipcRenderer.removeListener("updater:download-progress", listener);
+  },
+  onUpdateDownloaded: (handler) => {
+    const listener = (_event: Electron.IpcRendererEvent, version: string) => handler(version);
+    ipcRenderer.on("updater:update-downloaded", listener);
+    return () => ipcRenderer.removeListener("updater:update-downloaded", listener);
+  },
+  checkForUpdates: () => ipcRenderer.invoke("updater:check"),
+  downloadUpdate: () => ipcRenderer.invoke("updater:download"),
+  installUpdate: () => ipcRenderer.send("updater:install")
 };
 
 contextBridge.exposeInMainWorld("trimApi", api);

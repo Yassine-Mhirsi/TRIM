@@ -34,6 +34,9 @@ export default function App(): ReactElement {
   const [isTrimming, setIsTrimming] = useState(false);
   const [isDetachingVideoForOverwrite, setIsDetachingVideoForOverwrite] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingUpdate, setPendingUpdate] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const [updateReady, setUpdateReady] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -53,6 +56,25 @@ export default function App(): ReactElement {
       setOutputPath("");
       setError(loadError instanceof Error ? loadError.message : "Failed to load the selected file.");
     }
+  }, []);
+
+  useEffect(() => {
+    const cleanupAvailable = window.trimApi.onUpdateAvailable((version) => {
+      setPendingUpdate(version);
+    });
+    const cleanupProgress = window.trimApi.onDownloadProgress((percent) => {
+      setDownloadProgress(Math.round(percent));
+    });
+    const cleanupDownloaded = window.trimApi.onUpdateDownloaded((version) => {
+      setDownloadProgress(null);
+      setPendingUpdate(null);
+      setUpdateReady(version);
+    });
+    return () => {
+      cleanupAvailable();
+      cleanupProgress();
+      cleanupDownloaded();
+    };
   }, []);
 
   useEffect(() => {
@@ -298,6 +320,38 @@ export default function App(): ReactElement {
               {isTrimming ? "Trimming..." : `Save Copy (${formatTimestamp(exportDuration)})`}
             </button>
           </div>
+        </div>
+      )}
+
+      {pendingUpdate && downloadProgress === null && !updateReady && (
+        <div className="update-banner">
+          <span>Update v{pendingUpdate} available</span>
+          <button
+            type="button"
+            className="update-banner-button"
+            onClick={() => { setDownloadProgress(0); void window.trimApi.downloadUpdate(); }}
+          >
+            Download
+          </button>
+        </div>
+      )}
+
+      {downloadProgress !== null && !updateReady && (
+        <div className="update-banner">
+          <span>Downloading update... {downloadProgress}%</span>
+        </div>
+      )}
+
+      {updateReady && (
+        <div className="update-banner">
+          <span>v{updateReady} ready to install</span>
+          <button
+            type="button"
+            className="update-banner-button"
+            onClick={() => window.trimApi.installUpdate()}
+          >
+            Restart
+          </button>
         </div>
       )}
 

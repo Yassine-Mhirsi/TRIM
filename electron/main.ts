@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
+import { autoUpdater } from "electron-updater";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -113,7 +114,51 @@ if (!singleInstanceLock) {
   app.whenReady().then(async () => {
     pendingFilePath = extractFileArg(process.argv);
     await createWindow();
+    setupAutoUpdater();
   });
+}
+
+function setupAutoUpdater(): void {
+  if (!app.isPackaged) {
+    return;
+  }
+
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on("update-available", (info) => {
+    mainWindow?.webContents.send("updater:update-available", info.version);
+  });
+
+  autoUpdater.on("download-progress", (progress) => {
+    mainWindow?.webContents.send("updater:download-progress", progress.percent);
+  });
+
+  autoUpdater.on("update-downloaded", (info) => {
+    mainWindow?.webContents.send("updater:update-downloaded", info.version);
+  });
+
+  autoUpdater.on("error", (err) => {
+    console.error("Auto-updater error:", err.message);
+  });
+
+  ipcMain.handle("updater:check", async () => {
+    await autoUpdater.checkForUpdates();
+  });
+
+  ipcMain.handle("updater:download", async () => {
+    await autoUpdater.downloadUpdate();
+  });
+
+  ipcMain.on("updater:install", () => {
+    autoUpdater.quitAndInstall();
+  });
+
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch((err: Error) => {
+      console.error("Update check failed:", err.message);
+    });
+  }, 3000);
 }
 
 app.on("window-all-closed", () => {

@@ -21,6 +21,12 @@ declare global {
         request: Omit<TrimRequest, "outputPath">,
         onProgress: (value: number) => void
       ) => Promise<TrimResult>;
+      onUpdateAvailable: (handler: (version: string) => void) => () => void;
+      onDownloadProgress: (handler: (percent: number) => void) => () => void;
+      onUpdateDownloaded: (handler: (version: string) => void) => () => void;
+      checkForUpdates: () => Promise<void>;
+      downloadUpdate: () => Promise<void>;
+      installUpdate: () => void;
     };
   }
 }

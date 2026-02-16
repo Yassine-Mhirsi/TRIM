@@ -248,7 +248,9 @@ export default function App(): ReactElement {
   return (
     <main className="app-shell">
       {/* Titlebar drag region */}
-      <div className="titlebar-drag-region" />
+      <div className="titlebar-drag-region">
+        <span className="titlebar-version">TRIM (v{__APP_VERSION__})</span>
+      </div>
 
       {!probe && (
         <div className="empty-state">

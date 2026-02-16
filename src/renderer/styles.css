@@ -30,6 +30,17 @@ body {
   right: 0;
   z-index: 100;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  padding-left: 14px;
+}
+
+.titlebar-version {
+  font-size: 12px;
+  font-weight: 500;
+  color: #4a5070;
+  letter-spacing: 0.3px;
+  user-select: none;
 }
 
 .app-shell {

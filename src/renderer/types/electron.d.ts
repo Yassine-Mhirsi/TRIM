@@ -5,6 +5,8 @@ import type {
 } from "../../main/services/ffmpegService";
 
 declare global {
+  const __APP_VERSION__: string;
+
   interface Window {
     trimApi: {
       getInitialFile: () => Promise<string | null>;

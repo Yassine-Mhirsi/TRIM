@@ -88,6 +88,8 @@ async function createWindow(): Promise<void> {
     await mainWindow.loadURL(pathToFileURL(rendererPath).toString());
   }
 
+  mainWindow.webContents.openDevTools();
+
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
@@ -118,6 +120,12 @@ if (!singleInstanceLock) {
   });
 }
 
+function logToRenderer(message: string): void {
+  mainWindow?.webContents.executeJavaScript(
+    `console.log("[updater]", ${JSON.stringify(message)})`
+  ).catch(() => {/* ignore if webContents not ready */});
+}
+
 function setupAutoUpdater(): void {
   if (!app.isPackaged) {
     return;
@@ -126,37 +134,51 @@ function setupAutoUpdater(): void {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
+  autoUpdater.on("checking-for-update", () => {
+    logToRenderer("Checking for updates...");
+  });
+
   autoUpdater.on("update-available", (info) => {
+    logToRenderer(`Update available: v${info.version}`);
     mainWindow?.webContents.send("updater:update-available", info.version);
   });
 
+  autoUpdater.on("update-not-available", (info) => {
+    logToRenderer(`No update available (current: ${app.getVersion()}, latest: ${info.version})`);
+  });
+
   autoUpdater.on("download-progress", (progress) => {
+    logToRenderer(`Download progress: ${progress.percent.toFixed(1)}% (${progress.transferred}/${progress.total})`);
     mainWindow?.webContents.send("updater:download-progress", progress.percent);
   });
 
   autoUpdater.on("update-downloaded", (info) => {
+    logToRenderer(`Update downloaded: v${info.version}`);
     mainWindow?.webContents.send("updater:update-downloaded", info.version);
   });
 
   autoUpdater.on("error", (err) => {
-    console.error("Auto-updater error:", err.message);
+    logToRenderer(`Error: ${err.message}\n${err.stack ?? ""}`);
   });
 
   ipcMain.handle("updater:check", async () => {
+    logToRenderer("Manual check triggered");
     await autoUpdater.checkForUpdates();
   });
 
   ipcMain.handle("updater:download", async () => {
+    logToRenderer("Download triggered");
     await autoUpdater.downloadUpdate();
   });
 
   ipcMain.on("updater:install", () => {
+    logToRenderer("Install triggered — quitting and installing");
     autoUpdater.quitAndInstall();
   });
 
   setTimeout(() => {
     autoUpdater.checkForUpdates().catch((err: Error) => {
-      console.error("Update check failed:", err.message);
+      logToRenderer(`Auto-check failed: ${err.message}`);
     });
   }, 3000);
 }

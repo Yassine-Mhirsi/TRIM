@@ -325,7 +325,16 @@ export default function App(): ReactElement {
 
       {pendingUpdate && downloadProgress === null && !updateReady && (
         <div className="update-banner">
-          <span>Update v{pendingUpdate} available</span>
+          <div className="update-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2L12 16M12 16L7 11M12 16L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 17V19C4 20.1 4.9 21 6 21H18C19.1 21 20 20.1 20 19V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="update-banner-text">
+            <span className="update-banner-title">Update v{pendingUpdate} available</span>
+            <span className="update-banner-subtitle">A new version is ready to download</span>
+          </div>
           <button
             type="button"
             className="update-banner-button"
@@ -338,13 +347,32 @@ export default function App(): ReactElement {
 
       {downloadProgress !== null && !updateReady && (
         <div className="update-banner">
-          <span>Downloading update... {downloadProgress}%</span>
+          <div className="update-banner-text" style={{ flex: 1 }}>
+            <div className="update-banner-progress-header">
+              <span className="update-banner-title">Downloading update...</span>
+              <span className="update-banner-percent">{downloadProgress}%</span>
+            </div>
+            <div className="update-banner-progress-track">
+              <div
+                className="update-banner-progress-fill"
+                style={{ width: `${downloadProgress}%` }}
+              />
+            </div>
+          </div>
         </div>
       )}
 
       {updateReady && (
-        <div className="update-banner">
-          <span>v{updateReady} ready to install</span>
+        <div className="update-banner update-banner-ready">
+          <div className="update-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="update-banner-text">
+            <span className="update-banner-title">v{updateReady} ready to install</span>
+            <span className="update-banner-subtitle">Restart to apply the update</span>
+          </div>
           <button
             type="button"
             className="update-banner-button"

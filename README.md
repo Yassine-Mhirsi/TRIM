@@ -18,6 +18,7 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 - **Three trim modes** — smart (tries fast copy first, falls back to re-encode), stream copy, or full re-encode
 - **Overwrite or Save As** — replace the original file or export to a new one
 - **Variable playback speed** from 0.25x to 16x
+- **Volume control** with mute toggle
 - **Keyboard shortcuts** for efficient editing
 - **Right-click integration** — open videos directly from Windows Explorer
 - **Supports** MP4, MOV, MKV, WebM, AVI, and M4V

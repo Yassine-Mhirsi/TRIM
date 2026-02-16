@@ -6,4 +6,6 @@ release/
 *.tsbuildinfo
 nul
 CLAUDE.md
-.claude/settings.local.json
+FEATURES.md
+.claude/*
+.cursor/*

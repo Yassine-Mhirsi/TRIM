@@ -31,14 +31,13 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 | Key | Action |
 |---|---|
 | `Space` | Play / Pause |
-| `Left Arrow` | Seek backward 5s |
-| `Right Arrow` | Seek forward 5s |
-| `Shift + Left Arrow` | Seek backward 1s |
-| `Shift + Right Arrow` | Seek forward 1s |
+| `Left Arrow` | Step backward 1 frame |
+| `Right Arrow` | Step forward 1 frame |
 | `[` | Set trim start to current time |
 | `]` | Set trim end to current time |
 | `Home` | Jump to trim start |
 | `End` | Jump to trim end |
+| `I` | Toggle video info (resolution, frame rate) |
 
 ## Installation
 

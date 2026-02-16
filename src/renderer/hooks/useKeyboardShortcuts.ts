@@ -61,14 +61,16 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
         }
         case "ArrowLeft": {
           e.preventDefault();
-          const step = e.shiftKey ? 1 : 5;
-          seek(clamp(currentTimeRef.current - step, 0, duration));
+          const video = videoRef.current;
+          if (video && !video.paused) video.pause();
+          seek(clamp(currentTimeRef.current - frameDuration, 0, duration));
           break;
         }
         case "ArrowRight": {
           e.preventDefault();
-          const step = e.shiftKey ? 1 : 5;
-          seek(clamp(currentTimeRef.current + step, 0, duration));
+          const video = videoRef.current;
+          if (video && !video.paused) video.pause();
+          seek(clamp(currentTimeRef.current + frameDuration, 0, duration));
           break;
         }
         case "[": {
@@ -87,21 +89,7 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
           onToggleInfo();
           break;
         }
-        case ",": {
-          e.preventDefault();
-          const video = videoRef.current;
-          if (video && !video.paused) video.pause();
-          seek(clamp(currentTimeRef.current - frameDuration, 0, duration));
-          break;
-        }
-        case ".": {
-          e.preventDefault();
-          const video = videoRef.current;
-          if (video && !video.paused) video.pause();
-          seek(clamp(currentTimeRef.current + frameDuration, 0, duration));
-          break;
-        }
-        case "Home": {
+case "Home": {
           e.preventDefault();
           seek(trimStartRef.current);
           break;

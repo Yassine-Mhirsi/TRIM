@@ -114,7 +114,7 @@ export default function Timeline(props: TimelineProps): ReactElement {
       <div className="timeline-trim-labels">
         <span>{formatTimestamp(trimStart)}</span>
         <span className="timeline-trim-duration">
-          Selectionnn: {formatTimestamp(trimEnd - trimStart)}
+          Selection: {formatTimestamp(trimEnd - trimStart)}
         </span>
         <span>{formatTimestamp(trimEnd)}</span>
       </div>

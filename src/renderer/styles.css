@@ -43,6 +43,14 @@ body {
   user-select: none;
 }
 
+.titlebar-info {
+  font-size: 11px;
+  color: #657cff;
+  margin-left: 10px;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
 .app-shell {
   height: 100%;
   padding: 50px 24px 24px;

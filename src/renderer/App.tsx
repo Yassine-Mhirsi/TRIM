@@ -11,6 +11,7 @@ type ProbeResult = {
   width: number;
   height: number;
   format: string;
+  frameRate: number;
 };
 
 function toFileUrl(localPath: string): string {
@@ -37,6 +38,7 @@ export default function App(): ReactElement {
   const [pendingUpdate, setPendingUpdate] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [updateReady, setUpdateReady] = useState<string | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -128,6 +130,12 @@ export default function App(): ReactElement {
     [duration]
   );
 
+  const frameDuration = probe ? 1 / probe.frameRate : 1 / 30;
+
+  const handleToggleInfo = useCallback(() => {
+    setShowInfo((prev) => !prev);
+  }, []);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     togglePlay,
@@ -136,8 +144,11 @@ export default function App(): ReactElement {
     trimStart: startSeconds,
     trimEnd: endSeconds,
     duration,
+    frameDuration,
+    videoRef,
     onTrimStartChange: handleTrimStartChange,
     onTrimEndChange: handleTrimEndChange,
+    onToggleInfo: handleToggleInfo,
     disabled: !probe || isTrimming,
   });
 
@@ -250,6 +261,9 @@ export default function App(): ReactElement {
       {/* Titlebar drag region */}
       <div className="titlebar-drag-region">
         <span className="titlebar-version">TRIM (v{__APP_VERSION__})</span>
+        {showInfo && probe && (
+          <span className="titlebar-info">{probe.frameRate.toFixed(2)} fps | {probe.width}x{probe.height}</span>
+        )}
       </div>
 
       {!probe && (

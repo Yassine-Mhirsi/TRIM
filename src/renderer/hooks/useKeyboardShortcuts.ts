@@ -8,8 +8,11 @@ type UseKeyboardShortcutsOptions = {
   trimStart: number;
   trimEnd: number;
   duration: number;
+  frameDuration: number;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   onTrimStartChange: (time: number) => void;
   onTrimEndChange: (time: number) => void;
+  onToggleInfo: () => void;
   disabled: boolean;
 };
 
@@ -21,8 +24,11 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
     trimStart,
     trimEnd,
     duration,
+    frameDuration,
+    videoRef,
     onTrimStartChange,
     onTrimEndChange,
+    onToggleInfo,
     disabled,
   } = options;
 
@@ -75,6 +81,26 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
           onTrimEndChange(currentTimeRef.current);
           break;
         }
+        case "i":
+        case "I": {
+          e.preventDefault();
+          onToggleInfo();
+          break;
+        }
+        case ",": {
+          e.preventDefault();
+          const video = videoRef.current;
+          if (video && !video.paused) video.pause();
+          seek(clamp(currentTimeRef.current - frameDuration, 0, duration));
+          break;
+        }
+        case ".": {
+          e.preventDefault();
+          const video = videoRef.current;
+          if (video && !video.paused) video.pause();
+          seek(clamp(currentTimeRef.current + frameDuration, 0, duration));
+          break;
+        }
         case "Home": {
           e.preventDefault();
           seek(trimStartRef.current);
@@ -90,5 +116,5 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
 
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [disabled, togglePlay, seek, duration, onTrimStartChange, onTrimEndChange]);
+  }, [disabled, togglePlay, seek, duration, frameDuration, videoRef, onTrimStartChange, onTrimEndChange, onToggleInfo]);
 }

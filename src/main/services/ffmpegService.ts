@@ -17,6 +17,7 @@ export type VideoProbeResult = {
   width: number;
   height: number;
   format: string;
+  frameRate: number;
 };
 
 export type TrimRequest = {
@@ -224,15 +225,26 @@ export async function probeVideo(filePath: string): Promise<VideoProbeResult> {
       try {
         const parsed = JSON.parse(json) as {
           format?: { duration?: string; format_name?: string };
-          streams?: Array<{ codec_type?: string; width?: number; height?: number }>;
+          streams?: Array<{ codec_type?: string; width?: number; height?: number; r_frame_rate?: string }>;
         };
         const durationSeconds = Number(parsed.format?.duration ?? 0);
         const videoStream = parsed.streams?.find((stream) => stream.codec_type === "video");
+
+        let frameRate = 30;
+        const rawRate = videoStream?.r_frame_rate;
+        if (rawRate) {
+          const [num, den] = rawRate.split("/").map(Number);
+          if (num && den) {
+            frameRate = num / den;
+          }
+        }
+
         resolve({
           durationSeconds,
           width: videoStream?.width ?? 0,
           height: videoStream?.height ?? 0,
-          format: parsed.format?.format_name ?? "unknown"
+          format: parsed.format?.format_name ?? "unknown",
+          frameRate
         });
       } catch (error) {
         reject(error);

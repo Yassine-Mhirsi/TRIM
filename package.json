@@ -3,7 +3,7 @@
   "version": "0.1.4",
   "main": "dist-electron/electron/main.js",
   "scripts": {
-    "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "dev": "npm run build:electron && concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "dev:renderer": "vite",
     "dev:electron": "wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
     "build": "npm run typecheck && npm run build:renderer && npm run build:electron",
@@ -12,7 +12,10 @@
     "typecheck": "tsc -p tsconfig.renderer.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
     "dist": "npm run build && electron-builder --win nsis",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "echo \"No automated tests configured yet\""
+    "test": "echo \"No automated tests configured yet\"",
+    "release:patch": "npm version patch && git push && git push --tags",
+    "release:minor": "npm version minor && git push && git push --tags",
+    "release:major": "npm version major && git push && git push --tags"
   },
   "keywords": [
     "electron",

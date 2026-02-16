@@ -7,6 +7,7 @@ import type {
 
 type AppApi = {
   getInitialFile: () => Promise<string | null>;
+  openVideo: () => Promise<string | null>;
   onFileOpened: (handler: (filePath: string) => void) => () => void;
   probeVideo: (filePath: string) => Promise<VideoProbeResult>;
   suggestOutputPath: (inputPath: string) => Promise<string>;
@@ -47,6 +48,7 @@ function invokeWithProgress(
 
 const api: AppApi = {
   getInitialFile: () => ipcRenderer.invoke("app:get-initial-file"),
+  openVideo: () => ipcRenderer.invoke("dialog:open-video"),
   onFileOpened: (handler) => {
     const listener = (_event: Electron.IpcRendererEvent, filePath: string) => {
       handler(filePath);

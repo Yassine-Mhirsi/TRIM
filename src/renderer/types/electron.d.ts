@@ -8,6 +8,7 @@ declare global {
   interface Window {
     trimApi: {
       getInitialFile: () => Promise<string | null>;
+      openVideo: () => Promise<string | null>;
       onFileOpened: (handler: (filePath: string) => void) => () => void;
       probeVideo: (filePath: string) => Promise<VideoProbeResult>;
       suggestOutputPath: (inputPath: string) => Promise<string>;

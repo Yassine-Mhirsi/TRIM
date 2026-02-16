@@ -211,10 +211,31 @@ export default function App(): ReactElement {
     }
   };
 
+  const handleOpenVideo = useCallback(async () => {
+    setError(null);
+    try {
+      const filePath = await window.trimApi.openVideo();
+      if (filePath) {
+        void loadVideo(filePath);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to open video");
+    }
+  }, [loadVideo]);
+
   return (
     <main className="app-shell">
       {/* Titlebar drag region */}
       <div className="titlebar-drag-region" />
+
+      {!probe && (
+        <div className="empty-state">
+          <p className="empty-state-message">Open a video to trim</p>
+          <button type="button" className="action-button-primary" onClick={handleOpenVideo}>
+            Open Video
+          </button>
+        </div>
+      )}
 
       {inputPath && videoSrc && (
         <VideoPlayer

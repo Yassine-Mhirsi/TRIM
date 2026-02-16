@@ -57,6 +57,7 @@ async function createWindow(): Promise<void> {
   // Remove the default menu bar entirely
   Menu.setApplicationMenu(null);
 
+  const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
   mainWindow = new BrowserWindow({
     width: 1160,
     height: 780,
@@ -72,7 +73,9 @@ async function createWindow(): Promise<void> {
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // Allow loading file:// videos when the app is served from localhost (dev)
+      webSecurity: !isDev
     }
   });
 
@@ -139,6 +142,25 @@ ipcMain.handle("trim:probe", async (_event, filePath: string) => {
 ipcMain.handle("trim:suggest-output-path", async (_event, inputPath: string) => {
   const candidate = suggestOutputPath(inputPath);
   return findAvailableOutputPath(candidate);
+});
+
+ipcMain.handle("dialog:open-video", async () => {
+  mainWindow?.focus();
+  const opts = {
+    title: "Open Video",
+    filters: [{ name: "Video Files", extensions: ["mp4", "mov", "mkv", "webm", "avi", "m4v"] }],
+    properties: ["openFile" as const]
+  };
+  const { canceled, filePaths } = mainWindow
+    ? await dialog.showOpenDialog(mainWindow, opts)
+    : await dialog.showOpenDialog(opts);
+
+  if (canceled || !filePaths?.length) {
+    return null;
+  }
+
+  const filePath = filePaths[0];
+  return isSupportedVideo(filePath) ? filePath : null;
 });
 
 ipcMain.handle("dialog:save-as", async (_event, suggestedPath: string) => {

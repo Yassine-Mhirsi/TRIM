@@ -22,8 +22,9 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 - **Drag & drop** — drag video files directly onto the app to open them
 - **Recent files** — quick access to your 10 most recently opened videos
 - **Automatic updates** — stay up-to-date with the latest features and fixes
-- **Keyboard shortcuts** for efficient editing
+- **Keyboard shortcuts** for efficient editing — press `?` to view all available shortcuts
 - **Right-click integration** — open videos directly from Windows Explorer
+- **Remember window size & position** — window layout is saved and restored between sessions
 - **Supports** MP4, MOV, MKV, WebM, AVI, and M4V
 
 ## Keyboard Shortcuts
@@ -38,6 +39,7 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 | `Home` | Jump to trim start |
 | `End` | Jump to trim end |
 | `I` | Toggle video info (resolution, frame rate) |
+| `?` | Toggle keyboard shortcuts cheatsheet |
 
 ## Installation
 

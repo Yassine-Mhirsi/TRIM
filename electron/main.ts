@@ -14,6 +14,7 @@ import {
   type TrimRequest
 } from "../src/main/services/ffmpegService";
 import { addRecentFile, getRecentFiles } from "../src/main/services/recentFiles";
+import { getWindowState, saveWindowState } from "../src/main/services/windowState";
 
 let mainWindow: BrowserWindow | null = null;
 let pendingFilePath: string | null = null;
@@ -61,9 +62,13 @@ async function createWindow(): Promise<void> {
   Menu.setApplicationMenu(null);
 
   const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
+  const savedBounds = getWindowState();
+
   mainWindow = new BrowserWindow({
-    width: 1160,
-    height: 780,
+    width: savedBounds?.width ?? 1160,
+    height: savedBounds?.height ?? 780,
+    x: savedBounds?.x,
+    y: savedBounds?.y,
     minWidth: 640,
     minHeight: 480,
     icon: path.join(app.getAppPath(), "assets", "app-icon.png"),
@@ -79,6 +84,25 @@ async function createWindow(): Promise<void> {
       nodeIntegration: false,
       // Allow loading file:// videos when the app is served from localhost (dev)
       webSecurity: !isDev
+    }
+  });
+
+  // Persist window bounds on move/resize (debounced)
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  const debouncedSave = (): void => {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isMinimized()) {
+        saveWindowState(mainWindow.getBounds());
+      }
+    }, 500);
+  };
+
+  mainWindow.on("resize", debouncedSave);
+  mainWindow.on("move", debouncedSave);
+  mainWindow.on("close", () => {
+    if (mainWindow && !mainWindow.isMinimized()) {
+      saveWindowState(mainWindow.getBounds());
     }
   });
 

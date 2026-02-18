@@ -30,7 +30,7 @@ export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerRe
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
-  const [volume, setVolumeState] = useState(1);
+  const [volume, setVolumeState] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
 
   // Refs to avoid stale closures in RAF loop and event handlers

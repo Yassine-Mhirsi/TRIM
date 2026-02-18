@@ -201,8 +201,8 @@ function setupAutoUpdater(): void {
   });
 
   ipcMain.on("updater:install", () => {
-    logToRenderer("Install triggered — quitting and installing");
-    autoUpdater.quitAndInstall();
+    logToRenderer("Install triggered — quitting and installing silently");
+    autoUpdater.quitAndInstall(true, true);
   });
 
   setTimeout(() => {

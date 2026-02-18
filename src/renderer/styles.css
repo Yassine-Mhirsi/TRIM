@@ -35,6 +35,34 @@ body {
   padding-left: 14px;
 }
 
+.back-button {
+  all: unset;
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #5a6385;
+  margin-right: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.back-button:hover {
+  color: #c9d0f2;
+  background: rgba(101, 124, 255, 0.12);
+}
+
+.back-button svg {
+  width: 18px;
+  height: 18px;
+}
+
 .titlebar-version {
   font-size: 12px;
   font-weight: 500;

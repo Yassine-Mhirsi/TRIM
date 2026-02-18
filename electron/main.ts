@@ -114,7 +114,9 @@ async function createWindow(): Promise<void> {
     await mainWindow.loadURL(pathToFileURL(rendererPath).toString());
   }
 
-  mainWindow.webContents.openDevTools();
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools();
+  }
 
   mainWindow.on("closed", () => {
     mainWindow = null;

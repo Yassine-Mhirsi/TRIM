@@ -40,6 +40,7 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 | `End` | Jump to trim end |
 | `I` | Toggle video info (resolution, frame rate) |
 | `?` | Toggle keyboard shortcuts cheatsheet |
+| `Esc` | Close video / go home |
 
 ## Installation
 

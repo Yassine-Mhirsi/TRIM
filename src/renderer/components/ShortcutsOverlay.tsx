@@ -9,6 +9,7 @@ const SHORTCUTS = [
   { key: "Home", description: "Jump to trim start" },
   { key: "End", description: "Jump to trim end" },
   { key: "I", description: "Toggle video info" },
+  { key: "Esc", description: "Close video / go home" },
   { key: "?", description: "Toggle this cheatsheet" },
 ];
 

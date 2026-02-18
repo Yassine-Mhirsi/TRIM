@@ -160,6 +160,30 @@ export default function App(): ReactElement {
     setShowShortcuts((prev) => !prev);
   }, []);
 
+  const closeVideo = useCallback(() => {
+    setProbe(null);
+    setInputPath(null);
+    setTrimRange({ start: 0, end: 0 });
+    setOutputPath("");
+    setError(null);
+    setIsTrimming(false);
+    setIsDetachingVideoForOverwrite(false);
+    setShowInfo(false);
+    setShowShortcuts(false);
+    window.trimApi.getRecentFiles().then(setRecentFiles);
+  }, []);
+
+  const showShortcutsRef = useRef(showShortcuts);
+  showShortcutsRef.current = showShortcuts;
+
+  const handleEscape = useCallback(() => {
+    if (showShortcutsRef.current) {
+      setShowShortcuts(false);
+    } else {
+      closeVideo();
+    }
+  }, [closeVideo]);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     togglePlay,
@@ -174,6 +198,7 @@ export default function App(): ReactElement {
     onTrimEndChange: handleTrimEndChange,
     onToggleInfo: handleToggleInfo,
     onToggleShortcuts: handleToggleShortcuts,
+    onCloseVideo: handleEscape,
     disabled: !probe || isTrimming,
   });
 
@@ -325,6 +350,19 @@ export default function App(): ReactElement {
     >
       {/* Titlebar drag region */}
       <div className="titlebar-drag-region">
+        {probe && (
+          <button
+            type="button"
+            className="back-button"
+            onClick={closeVideo}
+            aria-label="Close video"
+            title="Close video (Esc)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            </svg>
+          </button>
+        )}
         <span className="titlebar-version">TRIM (v{__APP_VERSION__})</span>
         {showInfo && probe && (
           <span className="titlebar-info">{probe.frameRate.toFixed(2)} fps | {probe.width}x{probe.height}</span>

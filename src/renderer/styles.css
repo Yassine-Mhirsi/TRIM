@@ -154,6 +154,45 @@ body {
   z-index: 5;
 }
 
+.video-capture-controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 5;
+}
+
+.video-capture-button {
+  all: unset;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.75);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.video-capture-button:hover:not(:disabled) {
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.video-capture-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.video-capture-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.video-capture-button-success {
+  color: #50c878;
+}
+
 .volume-control {
   position: relative;
   display: flex;

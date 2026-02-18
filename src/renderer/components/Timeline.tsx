@@ -1,5 +1,6 @@
 import { useRef, type ReactElement } from "react";
 import { useTimelineDrag } from "../hooks/useTimelineDrag";
+import { useTimelineThumbnail } from "../hooks/useTimelineThumbnail";
 import { formatTimestamp, formatPrecise } from "../utils/time";
 
 type TimelineProps = {
@@ -11,6 +12,7 @@ type TimelineProps = {
   onSeek: (time: number) => void;
   onTrimStartChange: (value: number) => void;
   onTrimEndChange: (value: number) => void;
+  videoSrc: string | null;
 };
 
 export default function Timeline(props: TimelineProps): ReactElement {
@@ -23,6 +25,7 @@ export default function Timeline(props: TimelineProps): ReactElement {
     onSeek,
     onTrimStartChange,
     onTrimEndChange,
+    videoSrc,
   } = props;
 
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -38,6 +41,9 @@ export default function Timeline(props: TimelineProps): ReactElement {
       onTrimEndChange,
       disabled,
     });
+
+  const { thumbnailDataUrl, hoverTime, tooltipLeftPercent, isVisible, onMouseMove, onMouseLeave } =
+    useTimelineThumbnail({ timelineRef, duration, videoSrc, activeDrag, disabled });
 
   const safeMax = Math.max(0.01, duration);
   const startPercent = (trimStart / safeMax) * 100;
@@ -57,6 +63,8 @@ export default function Timeline(props: TimelineProps): ReactElement {
         className={`timeline-track-container${disabled ? " disabled" : ""}`}
         ref={timelineRef}
         onPointerDown={onPointerDownTrack}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
       >
         {/* Layer 1: Base track */}
         <div className="timeline-track-base" />
@@ -108,6 +116,29 @@ export default function Timeline(props: TimelineProps): ReactElement {
             <div className="timeline-handle-tooltip">{formatPrecise(dragTime)}</div>
           )}
         </div>
+
+        {/* Layer 8: Thumbnail tooltip */}
+        {isVisible && hoverTime !== null && (
+          <div
+            className="timeline-thumbnail-tooltip"
+            style={{ left: `${tooltipLeftPercent}%` }}
+            aria-hidden="true"
+          >
+            {thumbnailDataUrl ? (
+              <img
+                className="timeline-thumbnail-image"
+                src={thumbnailDataUrl}
+                width={160}
+                height={90}
+                alt=""
+                draggable={false}
+              />
+            ) : (
+              <div className="timeline-thumbnail-placeholder" />
+            )}
+            <span className="timeline-thumbnail-time">{formatPrecise(hoverTime)}</span>
+          </div>
+        )}
       </div>
 
       {/* Trim range labels */}

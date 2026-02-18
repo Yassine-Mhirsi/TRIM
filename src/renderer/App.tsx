@@ -461,6 +461,7 @@ export default function App(): ReactElement {
           onSeek={seek}
           onTrimStartChange={handleTrimStartChange}
           onTrimEndChange={handleTrimEndChange}
+          videoSrc={videoSrc}
         />
       )}
 

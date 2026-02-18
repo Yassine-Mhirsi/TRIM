@@ -560,6 +560,62 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ========== THUMBNAIL TOOLTIP ========== */
+
+.timeline-thumbnail-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  background: #1a1e35;
+  border: 1px solid #2a2f4b;
+  border-radius: 6px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: thumbnail-appear 0.1s ease-out;
+}
+
+@keyframes thumbnail-appear {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.timeline-thumbnail-image {
+  display: block;
+  width: 160px;
+  height: 90px;
+  object-fit: cover;
+}
+
+.timeline-thumbnail-placeholder {
+  width: 160px;
+  height: 90px;
+  background: linear-gradient(90deg, #171a2c 25%, #1e2340 50%, #171a2c 75%);
+  background-size: 200% 100%;
+  animation: thumbnail-shimmer 1s linear infinite;
+}
+
+@keyframes thumbnail-shimmer {
+  from { background-position: 200% center; }
+  to   { background-position: -200% center; }
+}
+
+.timeline-thumbnail-time {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: #c9d0f2;
+  padding: 4px 6px;
+  background: #1a1e35;
+  white-space: nowrap;
+}
+
 /* ========== TRIM LABELS ========== */
 
 .timeline-trim-labels {

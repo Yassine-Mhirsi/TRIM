@@ -15,6 +15,7 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 ## Features
 
 - **Visual timeline** with draggable handles to set trim start and end points
+- **Thumbnail preview** — hover over the timeline to see a frame preview at that position
 - **Three trim modes** — smart (tries fast copy first, falls back to re-encode), stream copy, or full re-encode
 - **Overwrite or Save As** — replace the original file or export to a new one
 - **Variable playback speed** from 0.25x to 16x

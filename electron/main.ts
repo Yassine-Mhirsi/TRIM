@@ -72,7 +72,7 @@ async function createWindow(): Promise<void> {
     y: savedBounds?.y,
     minWidth: 640,
     minHeight: 480,
-    icon: path.join(app.getAppPath(), "assets", "app-icon.png"),
+    icon: path.join(app.getAppPath(), "assets", "app-icon.ico"),
     titleBarStyle: "hidden",
     titleBarOverlay: {
       color: "#0f1222",

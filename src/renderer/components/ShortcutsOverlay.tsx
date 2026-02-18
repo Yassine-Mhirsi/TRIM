@@ -8,6 +8,7 @@ const SHORTCUTS = [
   { key: "]", description: "Set trim end" },
   { key: "Home", description: "Jump to trim start" },
   { key: "End", description: "Jump to trim end" },
+  { key: "S", description: "Save current frame as PNG" },
   { key: "I", description: "Toggle video info" },
   { key: "Esc", description: "Close video / go home" },
   { key: "?", description: "Toggle this cheatsheet" },

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
 import { autoUpdater } from "electron-updater";
 import { existsSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -294,4 +295,17 @@ ipcMain.handle("trim:overwrite", async (event, request: Omit<TrimRequest, "outpu
   return overwriteVideo(request, (progress) => {
     event.sender.send(`trim:progress:${request.jobId}`, progress);
   });
+});
+
+ipcMain.handle("frame:save-png", async (_event, buffer: ArrayBuffer, inputPath: string, outputPath: string, currentTime: number) => {
+  const dir = path.dirname(outputPath);
+  const base = path.basename(inputPath, path.extname(inputPath));
+  const totalSeconds = Math.floor(currentTime);
+  const h = Math.floor(totalSeconds / 3600).toString().padStart(2, "0");
+  const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, "0");
+  const s = (totalSeconds % 60).toString().padStart(2, "0");
+  const savePath = path.join(dir, `${base}_frame_${h}-${m}-${s}.png`);
+
+  await writeFile(savePath, Buffer.from(buffer));
+  return savePath;
 });

@@ -22,6 +22,7 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 - **Drag & drop** — drag video files directly onto the app to open them
 - **Recent files** — quick access to your 10 most recently opened videos
 - **Automatic updates** — stay up-to-date with the latest features and fixes
+- **Frame capture** — save the current video frame as a PNG with `S` or the camera button
 - **Keyboard shortcuts** for efficient editing — press `?` to view all available shortcuts
 - **Right-click integration** — open videos directly from Windows Explorer
 - **Remember window size & position** — window layout is saved and restored between sessions
@@ -38,6 +39,7 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 | `]` | Set trim end to current time |
 | `Home` | Jump to trim start |
 | `End` | Jump to trim end |
+| `S` | Save current frame as PNG |
 | `I` | Toggle video info (resolution, frame rate) |
 | `?` | Toggle keyboard shortcuts cheatsheet |
 | `Esc` | Close video / go home |

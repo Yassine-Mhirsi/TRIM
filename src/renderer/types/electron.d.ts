@@ -29,6 +29,7 @@ declare global {
       onUpdateAvailable: (handler: (version: string) => void) => () => void;
       onDownloadProgress: (handler: (percent: number) => void) => () => void;
       onUpdateDownloaded: (handler: (version: string) => void) => () => void;
+      saveFrameAsPng: (buffer: ArrayBuffer, inputPath: string, outputPath: string, currentTime: number) => Promise<string>;
       checkForUpdates: () => Promise<void>;
       downloadUpdate: () => Promise<void>;
       installUpdate: () => void;

@@ -15,6 +15,7 @@ type UseKeyboardShortcutsOptions = {
   onToggleInfo: () => void;
   onToggleShortcuts: () => void;
   onCloseVideo: () => void;
+  onCaptureFrame: () => void;
   disabled: boolean;
 };
 
@@ -33,6 +34,7 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
     onToggleInfo,
     onToggleShortcuts,
     onCloseVideo,
+    onCaptureFrame,
     disabled,
   } = options;
 
@@ -109,6 +111,12 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
           onTrimEndChange(currentTimeRef.current);
           break;
         }
+        case "s":
+        case "S": {
+          e.preventDefault();
+          onCaptureFrame();
+          break;
+        }
         case "i":
         case "I": {
           e.preventDefault();
@@ -130,5 +138,5 @@ case "Home": {
 
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [disabled, togglePlay, seek, duration, frameDuration, videoRef, onTrimStartChange, onTrimEndChange, onToggleInfo]);
+  }, [disabled, togglePlay, seek, duration, frameDuration, videoRef, onTrimStartChange, onTrimEndChange, onToggleInfo, onCaptureFrame]);
 }

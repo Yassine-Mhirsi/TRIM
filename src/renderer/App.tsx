@@ -55,6 +55,8 @@ export default function App(): ReactElement {
   const [isDragOver, setIsDragOver] = useState(false);
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [isCapturingFrame, setIsCapturingFrame] = useState(false);
+  const [frameCaptureSuccess, setFrameCaptureSuccess] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -160,6 +162,40 @@ export default function App(): ReactElement {
     setShowShortcuts((prev) => !prev);
   }, []);
 
+  const captureFrame = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video || !inputPath) return;
+
+    setIsCapturingFrame(true);
+    setFrameCaptureSuccess(false);
+    setError(null);
+
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Could not get canvas context.");
+
+      ctx.drawImage(video, 0, 0);
+
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("Failed to capture frame.");
+
+      const arrayBuffer = await blob.arrayBuffer();
+      // Use outputPath dir if available, otherwise fall back to inputPath dir
+      const effectiveOutputPath = outputPath || inputPath;
+      await window.trimApi.saveFrameAsPng(arrayBuffer, inputPath, effectiveOutputPath, video.currentTime);
+
+      setFrameCaptureSuccess(true);
+      setTimeout(() => setFrameCaptureSuccess(false), 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save frame.");
+    } finally {
+      setIsCapturingFrame(false);
+    }
+  }, [videoRef, inputPath, outputPath]);
+
   const closeVideo = useCallback(() => {
     setProbe(null);
     setInputPath(null);
@@ -199,6 +235,7 @@ export default function App(): ReactElement {
     onToggleInfo: handleToggleInfo,
     onToggleShortcuts: handleToggleShortcuts,
     onCloseVideo: handleEscape,
+    onCaptureFrame: () => { void captureFrame(); },
     disabled: !probe || isTrimming,
   });
 
@@ -431,6 +468,27 @@ export default function App(): ReactElement {
         <div className="controls-actions-row">
           <div className="action-buttons">
             {isTrimming && <span className="spinner" aria-label="Trimming in progress" />}
+            <button
+              type="button"
+              className={`icon-button${frameCaptureSuccess ? " icon-button-success" : ""}`}
+              onClick={() => void captureFrame()}
+              disabled={isTrimming || isCapturingFrame}
+              aria-label="Save current frame as PNG"
+              title="Save current frame as PNG (S)"
+            >
+              {isCapturingFrame ? (
+                <span className="spinner" aria-label="Saving frame..." />
+              ) : frameCaptureSuccess ? (
+                <svg className="capture-success-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="12" cy="13" r="4" fill="none" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              )}
+            </button>
             <button
               type="button"
               className="icon-button"

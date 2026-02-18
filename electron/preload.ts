@@ -26,6 +26,7 @@ type AppApi = {
   onUpdateAvailable: (handler: (version: string) => void) => () => void;
   onDownloadProgress: (handler: (percent: number) => void) => () => void;
   onUpdateDownloaded: (handler: (version: string) => void) => () => void;
+  saveFrameAsPng: (buffer: ArrayBuffer, inputPath: string, outputPath: string, currentTime: number) => Promise<string>;
   checkForUpdates: () => Promise<void>;
   downloadUpdate: () => Promise<void>;
   installUpdate: () => void;
@@ -92,6 +93,8 @@ const api: AppApi = {
     ipcRenderer.on("updater:update-downloaded", listener);
     return () => ipcRenderer.removeListener("updater:update-downloaded", listener);
   },
+  saveFrameAsPng: (buffer, inputPath, outputPath, currentTime) =>
+    ipcRenderer.invoke("frame:save-png", buffer, inputPath, outputPath, currentTime),
   checkForUpdates: () => ipcRenderer.invoke("updater:check"),
   downloadUpdate: () => ipcRenderer.invoke("updater:download"),
   installUpdate: () => ipcRenderer.send("updater:install")

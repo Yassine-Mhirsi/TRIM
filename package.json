@@ -86,7 +86,7 @@
       "repo": "TRIM"
     },
     "win": {
-      "signAndEditExecutable": false,
+      "signAndEditExecutable": true,
       "verifyUpdateCodeSignature": false,
       "icon": "assets/app-icon.ico",
       "target": [

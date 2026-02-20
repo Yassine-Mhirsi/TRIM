@@ -20,7 +20,6 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 - **Overwrite or Save As** — replace the original file or export to a new one
 - **Variable playback speed** from 0.25x to 16x
 - **Volume control** with mute toggle
-- **Drag & drop** — drag video files directly onto the app to open them
 - **Recent files** — quick access to your 10 most recently opened videos
 - **Automatic updates** — stay up-to-date with the latest features and fixes
 - **Frame capture** — save the current video frame as a PNG with `S` or the camera button

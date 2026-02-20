@@ -7,8 +7,6 @@ import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { normalizeTrimRange, type TrimRange } from "./utils/math";
 import { formatTimestamp } from "./utils/time";
 
-const SUPPORTED_EXTENSIONS = new Set([".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v"]);
-
 function fileName(fullPath: string): string {
   return fullPath.replace(/^.*[\\/]/, "");
 }
@@ -53,7 +51,6 @@ export default function App(): ReactElement {
   const [updateReady, setUpdateReady] = useState<string | null>(null);
   const [dismissedUpdate, setDismissedUpdate] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isCapturingFrame, setIsCapturingFrame] = useState(false);
@@ -334,40 +331,6 @@ export default function App(): ReactElement {
     }
   };
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragOver(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
-
-    const filePath = window.trimApi.getDroppedFilePath(file);
-    if (!filePath) return;
-
-    const ext = filePath.slice(filePath.lastIndexOf(".")).toLowerCase();
-    if (!SUPPORTED_EXTENSIONS.has(ext)) {
-      setError("Unsupported file format. Supported: MP4, MOV, MKV, WebM, AVI, M4V.");
-      return;
-    }
-
-    void loadVideo(filePath);
-  }, [loadVideo]);
-
   const handleOpenVideo = useCallback(async () => {
     setError(null);
     try {
@@ -381,13 +344,7 @@ export default function App(): ReactElement {
   }, [loadVideo]);
 
   return (
-    <main
-      className={`app-shell${isDragOver ? " drag-over" : ""}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
-    >
+    <main className="app-shell">
       {/* Titlebar drag region */}
       <div className="titlebar-drag-region">
         {probe && (
@@ -415,7 +372,6 @@ export default function App(): ReactElement {
           <button type="button" className="action-button-primary" onClick={handleOpenVideo}>
             Open Video
           </button>
-          <p className="empty-state-hint">or drag & drop a video file</p>
           {recentFiles.length > 0 && (
             <div className="recent-files">
               <h3 className="recent-files-title">Recent Files</h3>

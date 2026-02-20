@@ -88,7 +88,7 @@
     "win": {
       "signAndEditExecutable": true,
       "verifyUpdateCodeSignature": false,
-      "icon": "assets/app-icon.ico",
+      "icon": "assets/app-icon2.png",
       "target": [
         "nsis"
       ]

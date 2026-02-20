@@ -51,6 +51,7 @@ export default function App(): ReactElement {
   const [pendingUpdate, setPendingUpdate] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [updateReady, setUpdateReady] = useState<string | null>(null);
+  const [dismissedUpdate, setDismissedUpdate] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
@@ -83,6 +84,7 @@ export default function App(): ReactElement {
   useEffect(() => {
     const cleanupAvailable = window.trimApi.onUpdateAvailable((version) => {
       setPendingUpdate(version);
+      setDismissedUpdate(false);
     });
     const cleanupProgress = window.trimApi.onDownloadProgress((percent) => {
       setDownloadProgress(Math.round(percent));
@@ -91,6 +93,7 @@ export default function App(): ReactElement {
       setDownloadProgress(null);
       setPendingUpdate(null);
       setUpdateReady(version);
+      setDismissedUpdate(false);
     });
     return () => {
       cleanupAvailable();
@@ -504,63 +507,88 @@ export default function App(): ReactElement {
         </div>
       )}
 
-      {pendingUpdate && downloadProgress === null && !updateReady && (
-        <div className="update-banner">
-          <div className="update-banner-icon">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 2L12 16M12 16L7 11M12 16L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4 17V19C4 20.1 4.9 21 6 21H18C19.1 21 20 20.1 20 19V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div className="update-banner-text">
-            <span className="update-banner-title">Update v{pendingUpdate} available</span>
-            <span className="update-banner-subtitle">A new version is ready to download</span>
-          </div>
-          <button
-            type="button"
-            className="update-banner-button"
-            onClick={() => { setDownloadProgress(0); void window.trimApi.downloadUpdate(); }}
-          >
-            Download
-          </button>
-        </div>
-      )}
-
-      {downloadProgress !== null && !updateReady && (
-        <div className="update-banner">
-          <div className="update-banner-text" style={{ flex: 1 }}>
-            <div className="update-banner-progress-header">
-              <span className="update-banner-title">Downloading update...</span>
-              <span className="update-banner-percent">{downloadProgress}%</span>
+      {(pendingUpdate || downloadProgress !== null || updateReady) && !dismissedUpdate && (
+        <div className={`update-notification${updateReady ? " update-notification-ready" : ""}`}>
+          <div className="update-notification-header">
+            <div className="update-notification-icon">
+              {updateReady ? (
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 3v13M12 16l-5-5M12 16l5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              )}
             </div>
-            <div className="update-banner-progress-track">
-              <div
-                className="update-banner-progress-fill"
-                style={{ width: `${downloadProgress}%` }}
-              />
+            <div className="update-notification-text">
+              {updateReady ? (
+                <>
+                  <div className="update-notification-title">v{updateReady} ready to install</div>
+                  <div className="update-notification-subtitle">Restart to apply the update</div>
+                </>
+              ) : downloadProgress !== null ? (
+                <>
+                  <div className="update-notification-title">Downloading update</div>
+                  <div className="update-notification-subtitle">v{pendingUpdate}</div>
+                </>
+              ) : (
+                <>
+                  <div className="update-notification-title">Update available</div>
+                  <div className="update-notification-subtitle">v{pendingUpdate} is ready to download</div>
+                </>
+              )}
             </div>
+            {downloadProgress === null && (
+              <button
+                type="button"
+                className="update-notification-dismiss"
+                onClick={() => setDismissedUpdate(true)}
+                aria-label="Dismiss"
+              >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            )}
           </div>
-        </div>
-      )}
 
-      {updateReady && (
-        <div className="update-banner update-banner-ready">
-          <div className="update-banner-icon">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <div className="update-notification-body">
+            {downloadProgress !== null && !updateReady && (
+              <div className="update-notification-progress">
+                <div className="update-notification-progress-row">
+                  <span className="update-notification-progress-label">Downloading...</span>
+                  <span className="update-notification-percent">{downloadProgress}%</span>
+                </div>
+                <div className="update-notification-track">
+                  <div className="update-notification-fill" style={{ width: `${downloadProgress}%` }} />
+                </div>
+              </div>
+            )}
+
+            {downloadProgress === null && (
+              <div className="update-notification-actions">
+                {updateReady ? (
+                  <button
+                    type="button"
+                    className="update-notification-btn"
+                    onClick={() => window.trimApi.installUpdate()}
+                  >
+                    Restart & Install
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="update-notification-btn"
+                    onClick={() => { setDownloadProgress(0); void window.trimApi.downloadUpdate(); }}
+                  >
+                    Update
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-          <div className="update-banner-text">
-            <span className="update-banner-title">v{updateReady} ready to install</span>
-            <span className="update-banner-subtitle">Restart to apply the update</span>
-          </div>
-          <button
-            type="button"
-            className="update-banner-button"
-            onClick={() => window.trimApi.installUpdate()}
-          >
-            Restart
-          </button>
         </div>
       )}
 

@@ -436,7 +436,7 @@ export default function App(): ReactElement {
               className="icon-button"
               onClick={chooseSaveAs}
               disabled={isTrimming}
-              aria-label="Choose destination file"
+              aria-label="Choose destination filee"
               title={`Choose destination file${outputPath ? ` (${outputPath})` : ""}`}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">

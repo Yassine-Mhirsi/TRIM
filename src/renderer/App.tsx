@@ -436,8 +436,8 @@ export default function App(): ReactElement {
               className="icon-button"
               onClick={chooseSaveAs}
               disabled={isTrimming}
-              aria-label="Choose destination filee"
-              title={`Choose destination file${outputPath ? ` (${outputPath})` : ""}`}
+              aria-label="Choose destination file"
+              title={`Choose destination filee${outputPath ? ` (${outputPath})` : ""}`}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M3 6.5A2.5 2.5 0 0 1 5.5 4h4.2c.6 0 1.18.24 1.6.66l1.18 1.18c.3.3.7.46 1.12.46H18.5A2.5 2.5 0 0 1 21 8.8v8.7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5v-11Zm2.5-.5a.5.5 0 0 0-.5.5v11c0 .28.22.5.5.5h13a.5.5 0 0 0 .5-.5V8.8a.5.5 0 0 0-.5-.5h-4.88a3.58 3.58 0 0 1-2.53-1.05L9.9 6.08A.25.25 0 0 0 9.7 6H5.5Z" />

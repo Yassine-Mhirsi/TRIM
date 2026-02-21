@@ -233,9 +233,16 @@ export async function probeVideo(filePath: string): Promise<VideoProbeResult> {
         let frameRate = 30;
         const rawRate = videoStream?.r_frame_rate;
         if (rawRate) {
-          const [num, den] = rawRate.split("/").map(Number);
-          if (num && den) {
-            frameRate = num / den;
+          const parts = rawRate.split("/");
+          if (parts.length === 2) {
+            const num = Number(parts[0]);
+            const den = Number(parts[1]);
+            if (Number.isFinite(num) && Number.isFinite(den) && num > 0 && den > 0) {
+              const calculated = num / den;
+              if (calculated >= 0.1 && calculated <= 1000) {
+                frameRate = calculated;
+              }
+            }
           }
         }
 

@@ -55,6 +55,7 @@ export default function App(): ReactElement {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isCapturingFrame, setIsCapturingFrame] = useState(false);
   const [frameCaptureSuccess, setFrameCaptureSuccess] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -203,6 +204,7 @@ export default function App(): ReactElement {
     setOutputPath("");
     setError(null);
     setIsTrimming(false);
+    setIsExtracting(false);
     setIsDetachingVideoForOverwrite(false);
     setShowInfo(false);
     setShowShortcuts(false);
@@ -236,10 +238,10 @@ export default function App(): ReactElement {
     onToggleShortcuts: handleToggleShortcuts,
     onCloseVideo: handleEscape,
     onCaptureFrame: () => { void captureFrame(); },
-    disabled: !probe || isTrimming,
+    disabled: !probe || isTrimming || isExtracting,
   });
 
-  const disableSaveActions = !inputPath || !probe || isTrimming || endSeconds <= startSeconds;
+  const disableSaveActions = !inputPath || !probe || isTrimming || isExtracting || endSeconds <= startSeconds;
   const exportDuration = useMemo(() => Math.max(0, endSeconds - startSeconds), [endSeconds, startSeconds]);
 
   const chooseSaveAs = async (): Promise<void> => {
@@ -328,6 +330,35 @@ export default function App(): ReactElement {
     } finally {
       setIsDetachingVideoForOverwrite(false);
       setIsTrimming(false);
+    }
+  };
+
+  const onExtractAudio = async (): Promise<void> => {
+    if (!inputPath) return;
+
+    setIsExtracting(true);
+    setError(null);
+
+    try {
+      const suggestedAudioPath = await window.trimApi.suggestAudioOutputPath(inputPath);
+      const result = await window.trimApi.extractAudio(
+        {
+          jobId: makeJobId(),
+          inputPath,
+          outputPath: suggestedAudioPath,
+          startSeconds,
+          endSeconds
+        },
+        () => undefined
+      );
+
+      if (!result.ok) {
+        throw new Error(result.error ?? "Audio extraction failed.");
+      }
+    } catch (extractError) {
+      setError(extractError instanceof Error ? extractError.message : "Audio extraction failed.");
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -430,12 +461,12 @@ export default function App(): ReactElement {
       {probe && (
         <div className="controls-actions-row">
           <div className="action-buttons">
-            {isTrimming && <span className="spinner" aria-label="Trimming in progress" />}
+            {(isTrimming || isExtracting) && <span className="spinner" aria-label="Operation in progress" />}
             <button
               type="button"
               className="icon-button"
               onClick={chooseSaveAs}
-              disabled={isTrimming}
+              disabled={isTrimming || isExtracting}
               aria-label="Choose destination file"
               title={`Choose destination filee${outputPath ? ` (${outputPath})` : ""}`}
             >
@@ -450,6 +481,14 @@ export default function App(): ReactElement {
               disabled={disableSaveActions}
             >
               {isTrimming ? "Trimming..." : "Overwrite Original"}
+            </button>
+            <button
+              type="button"
+              className="action-button-audio"
+              onClick={() => { void onExtractAudio(); }}
+              disabled={disableSaveActions}
+            >
+              {isExtracting ? "Extracting..." : `Extract Audio (${formatTimestamp(exportDuration)})`}
             </button>
             <button
               type="button"

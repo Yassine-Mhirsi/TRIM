@@ -5,13 +5,16 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
+  extractAudio,
   findAvailableOutputPath,
   isSupportedVideo,
   overwriteVideo,
   probeVideo,
+  suggestAudioOutputPath,
   suggestOutputPath,
   trimVideo,
   validateInputVideo,
+  type AudioExtractionRequest,
   type TrimRequest
 } from "../src/main/services/ffmpegService";
 import { addRecentFile, getRecentFiles } from "../src/main/services/recentFiles";
@@ -294,6 +297,17 @@ ipcMain.handle("trim:start", async (event, request: TrimRequest) => {
 ipcMain.handle("trim:overwrite", async (event, request: Omit<TrimRequest, "outputPath">) => {
   return overwriteVideo(request, (progress) => {
     event.sender.send(`trim:progress:${request.jobId}`, progress);
+  });
+});
+
+ipcMain.handle("audio:suggest-output-path", async (_event, inputPath: string) => {
+  const candidate = suggestAudioOutputPath(inputPath);
+  return findAvailableOutputPath(candidate);
+});
+
+ipcMain.handle("audio:extract", async (event, request: AudioExtractionRequest) => {
+  return extractAudio(request, (progress) => {
+    event.sender.send(`audio:progress:${request.jobId}`, progress);
   });
 });
 

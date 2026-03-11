@@ -36,6 +36,20 @@ export type TrimResult = {
   error?: string;
 };
 
+export type AudioExtractionRequest = {
+  jobId: string;
+  inputPath: string;
+  outputPath: string;
+  startSeconds: number;
+  endSeconds: number;
+};
+
+export type AudioExtractionResult = {
+  ok: boolean;
+  outputPath: string;
+  error?: string;
+};
+
 function isRetriableRenameError(error: unknown): boolean {
   const code = (error as NodeJS.ErrnoException | undefined)?.code;
   return code === "EBUSY" || code === "EPERM" || code === "EACCES";
@@ -170,6 +184,11 @@ export async function validateInputVideo(filePath: string): Promise<void> {
 export function suggestOutputPath(inputPath: string): string {
   const parsed = path.parse(inputPath);
   return path.join(parsed.dir, `${parsed.name}_trimmed${parsed.ext}`);
+}
+
+export function suggestAudioOutputPath(inputPath: string): string {
+  const parsed = path.parse(inputPath);
+  return path.join(parsed.dir, `${parsed.name}_audio.mp3`);
 }
 
 export async function ensureWritableOutputPath(outputPath: string): Promise<void> {
@@ -343,6 +362,63 @@ export async function trimVideo(
   }
 
   return trimWithMode(request, "reencode", onProgress);
+}
+
+export async function extractAudio(
+  request: AudioExtractionRequest,
+  onProgress: (value: number) => void
+): Promise<AudioExtractionResult> {
+  if (request.startSeconds < 0 || request.endSeconds <= request.startSeconds) {
+    throw new Error("Invalid trim range.");
+  }
+
+  await validateInputVideo(request.inputPath);
+  await ensureWritableOutputPath(request.outputPath);
+
+  const ffmpegPath = resolveFfmpegPath();
+  const totalDuration = Math.max(0.001, request.endSeconds - request.startSeconds);
+  const start = timestampFromSeconds(request.startSeconds);
+  const end = timestampFromSeconds(request.endSeconds);
+
+  const args = [
+    "-hide_banner",
+    "-y",
+    "-ss", start,
+    "-to", end,
+    "-i", request.inputPath,
+    "-vn",
+    "-q:a", "0",
+    request.outputPath
+  ];
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(ffmpegPath, args, { windowsHide: true });
+    let stderr = "";
+
+    child.stderr.on("data", (chunk: Buffer) => {
+      const text = chunk.toString("utf8");
+      stderr += text;
+      const progressSeconds = parseProgressSeconds(text);
+      if (progressSeconds !== null) {
+        const ratio = Math.max(0, Math.min(1, progressSeconds / totalDuration));
+        onProgress(ratio);
+      }
+    });
+
+    child.on("error", (error: Error) => reject(error));
+    child.on("close", (code) => {
+      if (code === 0) {
+        onProgress(1);
+        resolve({ ok: true, outputPath: request.outputPath });
+      } else {
+        resolve({
+          ok: false,
+          outputPath: request.outputPath,
+          error: stderr || "ffmpeg failed to extract audio."
+        });
+      }
+    });
+  });
 }
 
 export async function overwriteVideo(

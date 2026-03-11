@@ -1,5 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
+  AudioExtractionRequest,
+  AudioExtractionResult,
   TrimRequest,
   TrimResult,
   VideoProbeResult
@@ -13,6 +15,7 @@ type AppApi = {
   addRecentFile: (filePath: string) => Promise<void>;
   probeVideo: (filePath: string) => Promise<VideoProbeResult>;
   suggestOutputPath: (inputPath: string) => Promise<string>;
+  suggestAudioOutputPath: (inputPath: string) => Promise<string>;
   chooseSavePath: (suggestedPath: string) => Promise<string | null>;
   trimVideo: (
     request: TrimRequest,
@@ -22,6 +25,10 @@ type AppApi = {
     request: Omit<TrimRequest, "outputPath">,
     onProgress: (value: number) => void
   ) => Promise<TrimResult>;
+  extractAudio: (
+    request: AudioExtractionRequest,
+    onProgress: (value: number) => void
+  ) => Promise<AudioExtractionResult>;
   onUpdateAvailable: (handler: (version: string) => void) => () => void;
   onDownloadProgress: (handler: (percent: number) => void) => () => void;
   onUpdateDownloaded: (handler: (version: string) => void) => () => void;
@@ -31,13 +38,14 @@ type AppApi = {
   installUpdate: () => void;
 };
 
-function invokeWithProgress(
+function invokeWithProgress<TReq extends { jobId: string }, TRes>(
   channel: string,
-  request: TrimRequest | Omit<TrimRequest, "outputPath">,
+  progressChannelPrefix: string,
+  request: TReq,
   onProgress: (value: number) => void
-): Promise<TrimResult> {
+): Promise<TRes> {
   return new Promise((resolve, reject) => {
-    const progressChannel = `trim:progress:${request.jobId}`;
+    const progressChannel = `${progressChannelPrefix}:${request.jobId}`;
     const onProgressMessage = (
       _event: Electron.IpcRendererEvent,
       progress: number
@@ -47,7 +55,7 @@ function invokeWithProgress(
 
     ipcRenderer
       .invoke(channel, request)
-      .then((result: TrimResult) => resolve(result))
+      .then((result: TRes) => resolve(result))
       .catch((error: unknown) => reject(error))
       .finally(() => {
         ipcRenderer.removeListener(progressChannel, onProgressMessage);
@@ -70,12 +78,16 @@ const api: AppApi = {
   probeVideo: (filePath) => ipcRenderer.invoke("trim:probe", filePath),
   suggestOutputPath: (inputPath) =>
     ipcRenderer.invoke("trim:suggest-output-path", inputPath),
+  suggestAudioOutputPath: (inputPath) =>
+    ipcRenderer.invoke("audio:suggest-output-path", inputPath),
   chooseSavePath: (suggestedPath) =>
     ipcRenderer.invoke("dialog:save-as", suggestedPath),
   trimVideo: (request, onProgress) =>
-    invokeWithProgress("trim:start", request, onProgress),
+    invokeWithProgress<TrimRequest, TrimResult>("trim:start", "trim:progress", request, onProgress),
   overwriteVideo: (request, onProgress) =>
-    invokeWithProgress("trim:overwrite", request, onProgress),
+    invokeWithProgress<Omit<TrimRequest, "outputPath">, TrimResult>("trim:overwrite", "trim:progress", request, onProgress),
+  extractAudio: (request, onProgress) =>
+    invokeWithProgress<AudioExtractionRequest, AudioExtractionResult>("audio:extract", "audio:progress", request, onProgress),
   onUpdateAvailable: (handler) => {
     const listener = (_event: Electron.IpcRendererEvent, version: string) => handler(version);
     ipcRenderer.on("updater:update-available", listener);

@@ -38,6 +38,17 @@ Or start with `npm run dev` and use the "Open Video" button. DevTools open autom
 
 `ffmpeg-static` and `ffprobe-static` npm packages provide platform-appropriate binaries. No system ffmpeg install needed. The packaged-app code paths look for `.exe` but the dev fallback resolves Linux binaries correctly.
 
+### Headless screen demo (Linux / CI)
+
+To record a short MP4 of the app on Xvfb (loads a sample clip, drives keyboard shortcuts with `xdotool`, captures display `:99`):
+
+```bash
+Xvfb :99 -screen 0 1280x800x24 -nolisten tcp &
+TRIM_DEMO_DISPLAY=:99 ./scripts/record-headless-demo.sh /path/to/video.mp4 ./trim_demo.mp4 40
+```
+
+Arguments: input video path, output `.mp4`, duration in seconds. Requires `xdotool` and system `ffmpeg` (for `x11grab`). If the environment sets `DISPLAY` to something other than `:99`, set `TRIM_DEMO_DISPLAY=:99` so recording targets Xvfb.
+
 ### No automated tests
 
 `npm test` only echoes a placeholder message. There are no unit or integration tests in this codebase.

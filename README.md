@@ -22,6 +22,7 @@ Right-click any video in Windows Explorer to open it directly in Trim:
 - **Volume control** with mute toggle
 - **Recent files** — quick access to your 10 most recently opened videos
 - **Automatic updates** — stay up-to-date with the latest features and fixes
+- **Audio extraction** — extract the audio from the selected range as an MP3 file
 - **Frame capture** — save the current video frame as a PNG with `S` or the camera button
 - **Keyboard shortcuts** for efficient editing — press `?` to view all available shortcuts
 - **Right-click integration** — open videos directly from Windows Explorer

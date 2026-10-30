@@ -810,6 +810,17 @@ button:hover:not(:disabled) {
   background: #4e2030;
 }
 
+.action-button-audio {
+  background: #163a38;
+  border-color: #22564f;
+  color: #6ed4c8;
+  font-weight: 500;
+}
+
+.action-button-audio:hover:not(:disabled) {
+  background: #1e4e4a;
+}
+
 /* ========== SPINNER ========== */
 
 .spinner {

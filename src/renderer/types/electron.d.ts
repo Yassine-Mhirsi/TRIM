@@ -1,4 +1,6 @@
 import type {
+  AudioExtractionRequest,
+  AudioExtractionResult,
   TrimRequest,
   TrimResult,
   VideoProbeResult
@@ -16,6 +18,7 @@ declare global {
       addRecentFile: (filePath: string) => Promise<void>;
       probeVideo: (filePath: string) => Promise<VideoProbeResult>;
       suggestOutputPath: (inputPath: string) => Promise<string>;
+      suggestAudioOutputPath: (inputPath: string) => Promise<string>;
       chooseSavePath: (suggestedPath: string) => Promise<string | null>;
       trimVideo: (
         request: TrimRequest,
@@ -25,6 +28,10 @@ declare global {
         request: Omit<TrimRequest, "outputPath">,
         onProgress: (value: number) => void
       ) => Promise<TrimResult>;
+      extractAudio: (
+        request: AudioExtractionRequest,
+        onProgress: (value: number) => void
+      ) => Promise<AudioExtractionResult>;
       onUpdateAvailable: (handler: (version: string) => void) => () => void;
       onDownloadProgress: (handler: (percent: number) => void) => () => void;
       onUpdateDownloaded: (handler: (version: string) => void) => () => void;
